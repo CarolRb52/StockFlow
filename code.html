@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StockFlow Pro - Inventory Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode:"class",
+    theme:{extend:{
+      colors:{
+        "outline-variant":"#c6c6cd","tertiary-fixed":"#fcdeb5","on-primary-container":"#7c839b",
+        "tertiary":"#000000","on-error-container":"#93000a","surface-container":"#e5eeff",
+        "primary-container":"#131b2e","on-background":"#0b1c30","on-error":"#ffffff",
+        "on-secondary":"#ffffff","secondary-container":"#e0e3e5","surface":"#f8f9ff",
+        "primary-fixed":"#dae2fd","background":"#f8f9ff","outline":"#76777d",
+        "on-primary":"#ffffff","on-surface":"#0b1c30","on-primary-fixed":"#131b2e",
+        "on-secondary-container":"#626567","on-tertiary":"#ffffff","on-tertiary-container":"#98805d",
+        "surface-dim":"#cbdbf5","surface-container-lowest":"#ffffff","on-surface-variant":"#45464d",
+        "error":"#ba1a1a","surface-variant":"#d3e4fe","tertiary-container":"#271901",
+        "inverse-surface":"#213145","surface-bright":"#f8f9ff","error-container":"#ffdad6",
+        "primary":"#000000","surface-container-high":"#dce9ff","inverse-on-surface":"#eaf1ff",
+        "primary-fixed-dim":"#bec6e0","surface-container-low":"#eff4ff","secondary-fixed":"#e0e3e5",
+        "inverse-primary":"#bec6e0","secondary":"#5c5f61","surface-container-highest":"#d3e4fe"
+      },
+      borderRadius:{"DEFAULT":"1rem","lg":"2rem","xl":"3rem","full":"9999px"},
+      spacing:{"section-gap":"40px","base":"8px","gutter":"24px","card-padding":"24px","container-margin":"32px"},
+      fontFamily:{
+        "headline-lg-mobile":["Plus Jakarta Sans"],"body-md":["Inter"],"label-sm":["Inter"],
+        "headline-md":["Plus Jakarta Sans"],"label-md":["Inter"],"headline-lg":["Plus Jakarta Sans"],
+        "body-lg":["Inter"],"display-lg":["Plus Jakarta Sans"]
+      },
+      fontSize:{
+        "headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}],
+        "body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],
+        "label-sm":["12px",{"lineHeight":"16px","fontWeight":"500"}],
+        "headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}],
+        "label-md":["14px",{"lineHeight":"20px","letterSpacing":"0.05em","fontWeight":"600"}],
+        "headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"700"}],
+        "body-lg":["18px",{"lineHeight":"28px","fontWeight":"400"}],
+        "display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}]
+      }
+    }}
+  }
+</script>
+<style>
+  body{background-color:#f8f9ff;font-family:'Inter',sans-serif;color:#0b1c30;}
+  .glass-card{background:#fff;box-shadow:0 20px 40px rgba(0,0,0,.04);border-radius:2rem;transition:all .3s cubic-bezier(.4,0,.2,1);}
+  .glass-card:hover{transform:translateY(-4px);box-shadow:0 25px 50px rgba(0,0,0,.06);}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .custom-scrollbar::-webkit-scrollbar{width:6px;}
+  .custom-scrollbar::-webkit-scrollbar-track{background:transparent;}
+  .custom-scrollbar::-webkit-scrollbar-thumb{background:#e0e3e5;border-radius:10px;}
+
+  /* Modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center;padding:1rem;}
+  .modal-overlay.active{display:flex;}
+
+  /* Toast */
+  @keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes fadeOut{to{transform:translateX(110%);opacity:0}}
+  .toast{animation:slideIn .3s ease forwards;}
+  .toast.hiding{animation:fadeOut .3s ease forwards;}
+
+  /* Inputs */
+  .sf-input{width:100%;padding:.75rem 1rem;border:1.5px solid #e0e3e5;border-radius:.75rem;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;background:#f8f9ff;}
+  .sf-input:focus{border-color:#000;}
+  .sf-label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#76777d;margin-bottom:.4rem;}
+  .sf-select{width:100%;padding:.75rem 2.5rem .75rem 1rem;border:1.5px solid #e0e3e5;border-radius:.75rem;font-family:'Inter',sans-serif;font-size:14px;outline:none;background:#f8f9ff;appearance:none;}
+  .sf-select:focus{border-color:#000;}
+
+  /* Sidebar */
+  #sidebar{transition:transform .3s cubic-bezier(.4,0,.2,1);}
+
+  /* Product list item */
+  .product-item{transition:all .2s;cursor:pointer;border-radius:1rem;padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;}
+  .product-item:hover{background:#f0f4ff;}
+  .product-item.selected{background:#000;color:#fff;}
+  .product-item.selected .pi-sku,.product-item.selected .pi-cat{color:rgba(255,255,255,.6);}
+  .product-item.selected .pi-stock{color:rgba(255,255,255,.85);}
+
+  /* Product color icons */
+  .prod-icon{width:40px;height:40px;border-radius:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+  /* Detail panel fade */
+  #detail-panel{animation:detailIn .25s ease;}
+  @keyframes detailIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .coming-soon{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:1rem;color:#76777d;}
+</style>
+</head>
+<body class="overflow-hidden h-screen flex">
+
+<!-- Sidebar Overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/30 z-40 hidden"></div>
+
+<!-- ── Sidebar ── -->
+<aside id="sidebar" class="flex flex-col p-6 h-screen w-[280px] bg-white/70 backdrop-blur-3xl border-r border-white/20 fixed left-0 top-0 z-50 rounded-r-lg shadow-[20px_0_40px_rgba(0,0,0,0.04)] -translate-x-full lg:translate-x-0">
+  <div class="flex items-center space-x-3 mb-10 px-2">
+    <div class="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
+      <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1;">inventory_2</span>
+    </div>
+    <div>
+      <h1 class="font-black tracking-tight text-black" style="font-family:'Plus Jakarta Sans';font-size:20px;">StockFlow</h1>
+      <p class="text-[10px] uppercase tracking-widest text-outline font-bold">Global Warehouse</p>
+    </div>
+  </div>
+  <nav class="flex-1 space-y-2">
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#" data-page="dashboard">
+      <span class="material-symbols-outlined">dashboard</span><span class="font-label-md text-label-md" data-i18n="nav_dashboard">Dashboard</span>
+    </a>
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full bg-primary text-on-primary shadow-md transition-all" href="#" data-page="inventory">
+      <span class="material-symbols-outlined">inventory_2</span><span class="font-label-md text-label-md" data-i18n="nav_inventory">Inventory</span>
+    </a>
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#" data-page="shipments">
+      <span class="material-symbols-outlined">local_shipping</span><span class="font-label-md text-label-md" data-i18n="nav_shipments">Shipments</span>
+    </a>
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#" data-page="analytics">
+      <span class="material-symbols-outlined">monitoring</span><span class="font-label-md text-label-md" data-i18n="nav_analytics">Analytics</span>
+    </a>
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#" data-page="history">
+      <span class="material-symbols-outlined">history</span><span class="font-label-md text-label-md" data-i18n="nav_history">History</span>
+    </a>
+  </nav>
+  <div class="pt-6 border-t border-white/20 space-y-2">
+    <a class="flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#">
+      <span class="material-symbols-outlined">help</span><span class="font-label-md text-label-md" data-i18n="nav_support">Support</span>
+    </a>
+    <a class="flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#">
+      <span class="material-symbols-outlined">person</span><span class="font-label-md text-label-md" data-i18n="nav_account">Account</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<main class="flex-1 lg:ml-[280px] h-screen overflow-y-auto custom-scrollbar relative">
+
+  <!-- Top App Bar -->
+  <header class="flex justify-between items-center px-gutter py-4 w-full sticky top-0 z-40 bg-surface/60 backdrop-blur-xl border-b border-white/10 shadow-sm">
+    <div class="flex items-center space-x-4">
+      <button id="hamburger-btn" class="lg:hidden p-2 rounded-full hover:bg-surface-variant">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="flex items-center space-x-2">
+        <span class="font-label-md text-label-md text-outline" id="breadcrumb-parent">Inventory</span>
+        <span class="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
+        <span class="font-label-md text-label-md text-primary font-bold" id="breadcrumb-current">Products</span>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4">
+      <div class="hidden md:flex bg-white/50 rounded-full px-4 py-2 border border-white/20 items-center space-x-2">
+        <span class="material-symbols-outlined text-outline text-[20px]">search</span>
+        <input id="search-input" class="bg-transparent border-none focus:ring-0 text-sm w-48 font-body-md" placeholder="Search products..." type="text"/>
+      </div>
+      <button id="lang-btn" onclick="toggleLang()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-surface-container text-[12px] font-black hover:bg-surface-container transition-colors tracking-widest">
+        <span class="material-symbols-outlined text-[14px]">translate</span>
+        <span id="lang-label">ES</span>
+      </button>
+      <div class="relative">
+        <button id="bell-btn" class="p-2 rounded-full hover:bg-surface-variant transition-colors relative">
+          <span class="material-symbols-outlined">notifications</span>
+          <span id="notif-dot" class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+        </button>
+        <div id="notif-panel" class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-surface-container-high overflow-hidden hidden" style="z-index:200;">
+          <div class="px-5 py-4 border-b border-surface-container flex justify-between items-center">
+            <span class="font-label-md text-label-md" data-i18n="notif_title">Notifications</span>
+            <button id="mark-all-read" class="text-[11px] text-primary font-bold hover:underline" data-i18n="notif_mark_read">Mark all read</button>
+          </div>
+          <div class="divide-y divide-surface-container max-h-72 overflow-y-auto custom-scrollbar">
+            <div class="px-5 py-4 hover:bg-surface-container-low flex gap-3 items-start cursor-pointer">
+              <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-emerald-600 text-[16px]">arrow_downward</span></div>
+              <div><p class="text-[13px] font-semibold" data-i18n="notif1_title">Inbound received · WH-04</p><p class="text-[12px] text-outline mt-0.5" data-i18n="notif1_body">+120 units of X-100</p><p class="text-[11px] text-outline/70 mt-1" data-i18n="notif_2h">2 hours ago</p></div>
+              <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
+            </div>
+            <div class="px-5 py-4 hover:bg-surface-container-low flex gap-3 items-start cursor-pointer">
+              <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-amber-600 text-[16px]">warning</span></div>
+              <div><p class="text-[13px] font-semibold" data-i18n="notif2_title">Low stock · Sensor ST-200</p><p class="text-[12px] text-outline mt-0.5" data-i18n="notif2_body">Only 85 units remaining</p><p class="text-[11px] text-outline/70 mt-1" data-i18n="notif_5h">5 hours ago</p></div>
+              <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
+            </div>
+            <div class="px-5 py-4 hover:bg-surface-container-low flex gap-3 items-start cursor-pointer">
+              <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-red-600 text-[16px]">error</span></div>
+              <div><p class="text-[13px] font-semibold" data-i18n="notif3_title">Out of stock · Motor ME-75</p><p class="text-[12px] text-outline mt-0.5" data-i18n="notif3_body">0 units available</p><p class="text-[11px] text-outline/70 mt-1" data-i18n="notif_yest">Yesterday</p></div>
+              <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-primary-fixed border-2 border-white shadow-sm cursor-pointer flex items-center justify-center hover:bg-surface-container-high transition-colors">
+        <span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings:'FILL' 1;">manage_accounts</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: INVENTORY
+  ═══════════════════════════════════════ -->
+  <div id="page-inventory" style="display:none;" class="p-6 max-w-7xl mx-auto">
+
+    <!-- LIST VIEW -->
+    <div id="inv-list-view">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="font-black text-[28px] text-on-surface" style="font-family:'Plus Jakarta Sans';" data-i18n="inv_list_title">Inventory List</h2>
+          <p class="text-outline text-[14px] mt-1" data-i18n="inv_list_sub">Manage your products and global stock levels.</p>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="showToast(tr('toast_export'))" class="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-full text-[13px] font-semibold hover:bg-surface-container transition-colors">
+            <span class="material-symbols-outlined text-[18px]">download</span> <span data-i18n="btn_export_csv">Export CSV</span>
+          </button>
+          <button onclick="openAddProductModal()" class="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-full text-[13px] font-bold shadow hover:scale-105 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-[18px]">add</span> <span data-i18n="btn_add_item">Add New Item</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 p-4 flex flex-wrap items-center gap-3">
+        <div class="relative">
+          <select id="cat-filter" class="pl-3 pr-8 py-2 border border-gray-200 rounded-full text-[13px] font-medium bg-white appearance-none cursor-pointer focus:outline-none">
+            <option value="" data-i18n="inv_all_cats">All categories</option>
+            <option value="Heavy Machinery" data-i18n="inv_heavy">Heavy Machinery</option>
+            <option value="Electronics" data-i18n="inv_electronics">Electronics</option>
+            <option value="Tools &amp; Parts" data-i18n="inv_tools">Tools &amp; Parts</option>
+            <option value="Raw Materials" data-i18n="inv_raw">Raw Materials</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+        </div>
+        <div class="relative">
+          <select id="status-filter" class="pl-3 pr-8 py-2 border border-gray-200 rounded-full text-[13px] font-medium bg-white appearance-none cursor-pointer focus:outline-none">
+            <option value="" data-i18n="inv_all_status">All Status</option>
+            <option value="active" data-i18n="st_active">ACTIVE</option>
+            <option value="low" data-i18n="st_low">LOW STOCK</option>
+            <option value="critical" data-i18n="st_critical">CRITICAL</option>
+            <option value="out" data-i18n="st_out">OUT OF STOCK</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+        </div>
+        <button class="p-2 rounded-full border border-gray-200 hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-outline text-[18px]">tune</span>
+        </button>
+        <div class="ml-auto flex items-center gap-4">
+          <div class="flex items-center gap-2 bg-surface-container-low rounded-full px-3 py-2">
+            <span class="material-symbols-outlined text-outline text-[18px]">search</span>
+            <input id="list-search" class="bg-transparent border-none focus:ring-0 text-sm outline-none w-40" placeholder="Search product..."/>
+          </div>
+          <div class="text-right border-l border-gray-100 pl-4">
+            <p class="text-[10px] uppercase font-bold text-outline tracking-wider">TOTAL SKU</p>
+            <p class="font-black text-[22px] leading-none" id="product-count">—</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead><tr class="border-b border-gray-100">
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_sku">SKU</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_product">Product Name</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_category">Category</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_stock">Current Stock</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_price">Unit Price</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_status">Status</th>
+              <th class="px-5 py-4"></th>
+            </tr></thead>
+            <tbody id="product-list" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETAIL VIEW (hidden by default) -->
+    <div id="inv-detail-view" style="display:none;">
+      <div class="mb-5">
+        <button onclick="showInventoryList()" class="flex items-center gap-2 text-primary font-bold text-[14px] hover:underline">
+          <span class="material-symbols-outlined">arrow_back</span> <span data-i18n="back_list">Back to list</span>
+        </button>
+      </div>
+      <div id="detail-panel" class="space-y-6 max-w-5xl"><!-- rendered by JS --></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: HOME / DASHBOARD
+  ═══════════════════════════════════════ -->
+  <div id="page-dashboard" style="display:none;" class="p-6 max-w-7xl mx-auto space-y-6">
+
+    <!-- Date -->
+    <p class="text-[12px] font-bold uppercase tracking-widest text-outline" id="dash-date"></p>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2 bg-gray-100 rounded-xl"><span class="material-symbols-outlined text-gray-600" style="font-variation-settings:'FILL' 1;">inventory_2</span></div>
+          <span class="text-[11px] text-outline">Total</span>
+        </div>
+        <p class="font-black text-[34px] leading-none text-on-surface mt-1" id="dash-products">—</p>
+        <p class="text-[12px] font-semibold text-outline mt-2" data-i18n="kpi_products">Total Products</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2 bg-amber-100 rounded-xl"><span class="material-symbols-outlined text-amber-600" style="font-variation-settings:'FILL' 1;">payments</span></div>
+          <span class="text-[11px] text-outline">MXN</span>
+        </div>
+        <p class="font-black text-[30px] leading-none text-on-surface mt-1" id="dash-value">—</p>
+        <p class="text-[12px] font-semibold text-outline mt-2" data-i18n="kpi_value">Total Stock Value</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-red-100">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2 bg-red-100 rounded-xl"><span class="material-symbols-outlined text-red-500" style="font-variation-settings:'FILL' 1;">warning</span></div>
+          <span class="text-[11px] font-bold text-red-500" data-i18n="badge_urgent">Critical</span>
+        </div>
+        <p class="font-black text-[34px] leading-none text-red-600 mt-1" id="dash-low">—</p>
+        <p class="text-[12px] font-semibold text-outline mt-2" data-i18n="kpi_low">Low Stock Alerts</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2 bg-gray-100 rounded-xl"><span class="material-symbols-outlined text-gray-600" style="font-variation-settings:'FILL' 1;">pending_actions</span></div>
+          <span class="text-[11px] text-outline" data-i18n="kpi_queue">Queue</span>
+        </div>
+        <p class="font-black text-[34px] leading-none text-on-surface mt-1" id="dash-active">—</p>
+        <p class="text-[12px] font-semibold text-outline mt-2" data-i18n="kpi_active">Products in Stock</p>
+      </div>
+    </div>
+
+    <!-- Chart + Alerts + Quick Actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <!-- Stock Movements Chart -->
+      <div class="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-start justify-between mb-1">
+          <h3 class="font-bold text-[18px]" data-i18n="section_movements">Stock Movements</h3>
+          <div class="flex items-center gap-4 text-[12px] text-outline">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-on-surface inline-block"></span> <span data-i18n="legend_entry">Entradas</span></span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block"></span> <span data-i18n="legend_exit">Salidas</span></span>
+          </div>
+        </div>
+        <p class="text-[12px] text-outline mb-5" data-i18n="sub_movements">Entradas vs Salidas (Last 12 Months)</p>
+        <div class="relative h-44">
+          <div class="flex items-end justify-between gap-1 h-full pb-6" id="dash-chart"></div>
+          <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[10px] text-outline" id="dash-months"></div>
+        </div>
+      </div>
+
+      <!-- Right column: Alerts + Quick Actions -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-[16px]" data-i18n="section_alerts">Critical Alerts</h3>
+            <span class="material-symbols-outlined text-amber-500 text-[20px]">diamond</span>
+          </div>
+          <div id="dash-alerts" class="space-y-3 max-h-44 overflow-y-auto custom-scrollbar"></div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="showToast('Scan Item')" class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-on-surface text-[26px]">qr_code_scanner</span>
+              <span class="text-[11px] font-semibold text-on-surface" data-i18n="qa_scan">Scan Item</span>
+            </button>
+            <button onclick="openMovementModal()" class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-on-surface text-[26px]">local_shipping</span>
+              <span class="text-[11px] font-semibold text-on-surface" data-i18n="qa_dispatch">Dispatch</span>
+            </button>
+            <button onclick="showPage('history')" class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-on-surface text-[26px]">fact_check</span>
+              <span class="text-[11px] font-semibold text-on-surface" data-i18n="qa_audit">Audit</span>
+            </button>
+            <button onclick="showToast('Suppliers')" class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-on-surface text-[26px]">groups</span>
+              <span class="text-[11px] font-semibold text-on-surface" data-i18n="qa_suppliers">Suppliers</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Last 5 Movements Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+        <div>
+          <h3 class="font-bold text-[18px]" data-i18n="section_last_mv">Last 5 Movements</h3>
+          <p class="text-[12px] text-outline" data-i18n="sub_last_mv">Real-time inventory ledger</p>
+        </div>
+        <button onclick="showPage('history')" class="px-4 py-2 border border-gray-200 rounded-full text-[13px] font-semibold hover:bg-surface-container transition-colors" data-i18n="btn_view_all">Ver todos →</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="bg-surface-container-low border-b border-gray-100">
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_product">Producto</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_action">Tipo</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_change">Cantidad</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_date">Fecha</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider text-right" data-i18n="col_status">Estatus</th>
+          </tr></thead>
+          <tbody id="dash-movements-tbody" class="divide-y divide-gray-50"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: HISTORY
+  ═══════════════════════════════════════ -->
+  <div id="page-history" style="display:none;" class="p-8 max-w-7xl mx-auto space-y-section-gap">
+    <div class="flex justify-between items-center">
+      <div><h2 class="font-headline-lg text-headline-lg" data-i18n="hist_title">Movement History</h2><p class="text-outline text-body-md mt-1" data-i18n="hist_sub">Complete audit log</p></div>
+      <div class="relative">
+        <select id="history-filter" class="sf-select" style="width:auto;padding:.5rem 2.5rem .5rem 1rem;">
+          <option value="">All types</option>
+          <option value="INBOUND">Inbound</option>
+          <option value="OUTBOUND">Outbound</option>
+          <option value="TRANSFER">Transfer</option>
+        </select>
+        <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+      </div>
+    </div>
+    <div class="glass-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="bg-surface-container/30">
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Date &amp; Time</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Product</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Action</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Warehouse</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">User</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Change</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline text-right">Balance</th>
+          </tr></thead>
+          <tbody id="history-tbody" class="divide-y divide-surface-container"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: SHIPMENTS
+  ═══════════════════════════════════════ -->
+  <div id="page-shipments" style="display:none;" class="p-6 max-w-7xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div>
+        <h2 class="font-black text-[28px] text-on-surface" style="font-family:'Plus Jakarta Sans';" data-i18n="ship_title">Gestión de Envíos</h2>
+        <p class="text-outline text-[14px] mt-1" data-i18n="ship_sub">Supervisa y coordina la logística global en tiempo real.</p>
+      </div>
+      <button onclick="openScheduleModal()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-full text-[13px] font-bold shadow hover:scale-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[18px]">schedule_send</span> <span data-i18n="btn_schedule">Agendar Envío</span>
+      </button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <div class="p-2.5 bg-gray-100 rounded-xl"><span class="material-symbols-outlined text-on-surface" style="font-variation-settings:'FILL' 1;">local_shipping</span></div>
+          <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[11px] font-bold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px]">trending_up</span>+12%
+          </span>
+        </div>
+        <div class="mt-8">
+          <p class="text-[12px] font-bold uppercase tracking-wider text-outline" data-i18n="ship_kpi_transit">En Tránsito</p>
+          <p class="font-black text-[40px] leading-none text-on-surface mt-1">1,284</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <div class="p-2.5 bg-emerald-100 rounded-xl"><span class="material-symbols-outlined text-emerald-600" style="font-variation-settings:'FILL' 1;">check_circle</span></div>
+        </div>
+        <div class="mt-8">
+          <p class="text-[12px] font-bold uppercase tracking-wider text-outline" data-i18n="ship_kpi_delivered">Entregados Hoy</p>
+          <div class="flex items-baseline gap-2 mt-1">
+            <p class="font-black text-[40px] leading-none text-on-surface">452</p>
+            <span class="text-[13px] text-outline" data-i18n="ship_units">unidades</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-l-4 border-red-100 border-l-red-400 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <div class="p-2.5 bg-red-100 rounded-xl"><span class="material-symbols-outlined text-red-500" style="font-variation-settings:'FILL' 1;">warning</span></div>
+        </div>
+        <div class="mt-8">
+          <p class="text-[12px] font-bold uppercase tracking-wider text-red-600" data-i18n="ship_kpi_delay">Alertas de Retraso</p>
+          <p class="font-black text-[40px] leading-none text-on-surface mt-1">14</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table + Route Detail -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Shipments Table -->
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+          <h3 class="font-bold text-[18px]" data-i18n="ship_table_title">Seguimiento de Cargas</h3>
+          <div class="flex gap-2">
+            <button class="p-2 hover:bg-surface-container rounded-xl transition-colors"><span class="material-symbols-outlined text-outline text-[18px]">filter_list</span></button>
+            <button onclick="showToast(tr('toast_export'))" class="p-2 hover:bg-surface-container rounded-xl transition-colors"><span class="material-symbols-outlined text-outline text-[18px]">download</span></button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-surface-container-low border-b border-gray-100">
+              <tr>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="ship_col_id">ID Envío</th>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="ship_col_dest">Destinatario</th>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="ship_col_carrier">Transportista</th>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="ship_col_date">Fecha Est.</th>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider text-right" data-i18n="ship_col_status">Estado</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50" id="ship-tbody">
+              <!-- rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Active Route Detail -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
+        <div>
+          <h3 class="font-bold text-[18px]" data-i18n="ship_route_title">Detalle de Ruta Activa</h3>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-outline mt-1" id="ship-selected-label">Envío Seleccionado: #SF-9021</p>
+        </div>
+        <!-- Map placeholder -->
+        <div class="aspect-video w-full rounded-2xl overflow-hidden relative bg-surface-container-low flex items-center justify-center">
+          <div class="flex flex-col items-center gap-3 text-outline">
+            <span class="material-symbols-outlined text-[48px]">map</span>
+            <p class="text-[12px] font-semibold">Barcelona → Shanghai</p>
+          </div>
+          <div class="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-md p-3 rounded-xl border border-white/20 flex items-center justify-between shadow-sm">
+            <div>
+              <p class="text-[10px] text-outline" data-i18n="ship_location">Ubicación Actual</p>
+              <p class="text-[13px] font-bold">Puerto de Barcelona</p>
+            </div>
+            <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+          </div>
+        </div>
+        <!-- Timeline -->
+        <div class="space-y-5 relative ml-4">
+          <div class="absolute left-0 top-0 bottom-0 w-[2px] bg-gray-200 ml-[11px]"></div>
+          <div class="relative flex gap-4">
+            <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center z-10 flex-shrink-0"><span class="material-symbols-outlined text-white text-[12px]">check</span></div>
+            <div>
+              <p class="text-[13px] font-bold" data-i18n="ship_step1">Salida de Origen</p>
+              <p class="text-[11px] text-outline">Shanghai Port, CN — 18 Sep, 08:30</p>
+            </div>
+          </div>
+          <div class="relative flex gap-4">
+            <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center z-10 flex-shrink-0"><span class="material-symbols-outlined text-white text-[12px]">local_shipping</span></div>
+            <div>
+              <p class="text-[13px] font-bold" data-i18n="ship_step2">Tránsito Internacional</p>
+              <p class="text-[11px] text-outline">Vessel: Evergreen G — En curso</p>
+            </div>
+          </div>
+          <div class="relative flex gap-4 opacity-50">
+            <div class="w-6 h-6 rounded-full bg-gray-200 border-2 border-gray-300 z-10 flex-shrink-0"></div>
+            <div>
+              <p class="text-[13px] font-bold" data-i18n="ship_step3">Llegada a Destino</p>
+              <p class="text-[11px] text-outline">Barcelona Terminal — Est. 24 Sep</p>
+            </div>
+          </div>
+        </div>
+        <button onclick="showToast(tr('ship_docs_toast'))" class="w-full py-3 border-2 border-primary text-primary rounded-xl font-bold text-[13px] hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">description</span> <span data-i18n="ship_btn_docs">Ver Documentación</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="page-analytics" style="display:none;" class="p-8">
+    <div class="coming-soon"><div class="p-6 bg-surface-container rounded-3xl mb-2"><span class="material-symbols-outlined text-[48px] text-outline">monitoring</span></div><h2 class="font-headline-md text-headline-md">Analytics</h2><p class="text-outline text-center max-w-xs">Advanced analytics coming soon.</p></div>
+  </div>
+</main>
+
+<!-- FAB -->
+<button id="fab-btn" class="fixed bottom-10 right-10 w-16 h-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+  <span class="material-symbols-outlined text-[32px] group-hover:rotate-90 transition-transform">add</span>
+</button>
+
+<!-- ═══════════════ MODAL: Adjust Pricing ═══════════════ -->
+<div id="pricing-modal" class="modal-overlay">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" onclick="event.stopPropagation()">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="font-headline-md text-headline-md">Adjust Pricing</h3>
+      <button id="pricing-modal-close" class="p-2 rounded-full hover:bg-surface-container"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="space-y-5">
+      <div><label class="sf-label" for="input-cost" data-i18n="lbl_unit_cost">Unit Cost (USD)</label><input id="input-cost" class="sf-input" type="number" min="0" step="0.01"/></div>
+      <div><label class="sf-label" for="input-price" data-i18n="lbl_sell_price">Selling Price (USD)</label><input id="input-price" class="sf-input" type="number" min="0" step="0.01"/></div>
+      <div class="p-4 bg-surface-container-low rounded-xl flex justify-between items-center">
+        <span class="text-[13px] text-outline font-medium" data-i18n="lbl_calc_margin">Calculated Margin</span>
+        <span id="modal-margin-preview" class="font-bold text-emerald-600 text-lg">—</span>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button id="pricing-modal-cancel" class="flex-1 py-3 border-2 border-surface-container rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors" data-i18n="btn_cancel">Cancel</button>
+        <button id="pricing-modal-save" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow hover:scale-105 active:scale-95 transition-all" data-i18n="btn_save">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: Register Movement ═══════════════ -->
+<div id="movement-modal" class="modal-overlay">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" onclick="event.stopPropagation()">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="font-headline-md text-headline-md" data-i18n="modal_mv_title">Register Movement</h3>
+      <button id="movement-modal-close" class="p-2 rounded-full hover:bg-surface-container"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="space-y-5">
+      <div>
+        <label class="sf-label" data-i18n="lbl_product">Product</label>
+        <div class="relative">
+          <select id="mv-product" class="sf-select"></select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+        </div>
+      </div>
+      <div>
+        <label class="sf-label" data-i18n="lbl_action_type">Action Type</label>
+        <div class="relative">
+          <select id="mv-type" class="sf-select">
+            <option value="INBOUND" data-i18n="type_inbound">INBOUND</option>
+            <option value="OUTBOUND" data-i18n="type_outbound">OUTBOUND</option>
+            <option value="TRANSFER" data-i18n="type_transfer">TRANSFER</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+        </div>
+      </div>
+      <div><label class="sf-label" for="mv-warehouse" data-i18n="lbl_warehouse">Warehouse / Location</label><input id="mv-warehouse" class="sf-input" type="text" data-i18n-placeholder="ph_warehouse"/></div>
+      <div><label class="sf-label" for="mv-user" data-i18n="lbl_resp_user">Responsible User</label><input id="mv-user" class="sf-input" type="text" data-i18n-placeholder="ph_user"/></div>
+      <div><label class="sf-label" for="mv-qty" data-i18n="lbl_qty">Quantity</label><input id="mv-qty" class="sf-input" type="number" min="1" placeholder="0"/></div>
+      <div class="flex gap-3 pt-2">
+        <button id="movement-modal-cancel" class="flex-1 py-3 border-2 border-surface-container rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors" data-i18n="btn_cancel">Cancel</button>
+        <button id="movement-modal-save" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow hover:scale-105 active:scale-95 transition-all" data-i18n="btn_register">Register</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: Add Product ═══════════════ -->
+<div id="add-product-modal" class="modal-overlay">
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" onclick="event.stopPropagation()" style="max-height:90vh;overflow-y:auto;">
+    <div class="sticky top-0 bg-white px-7 py-5 border-b border-surface-container flex justify-between items-center z-10">
+      <h3 class="font-black text-[18px]" style="font-family:'Plus Jakarta Sans';" data-i18n="modal_add_title">Add New Product</h3>
+      <button id="add-product-modal-close" class="p-2 rounded-full hover:bg-surface-container transition-colors"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="px-7 py-6 space-y-5">
+
+      <!-- Image upload -->
+      <div>
+        <label class="sf-label" data-i18n="lbl_image">Product Image</label>
+        <div id="img-drop-zone" class="relative border-2 border-dashed border-surface-container rounded-xl overflow-hidden cursor-pointer hover:border-primary transition-colors" style="height:160px;" onclick="document.getElementById('img-file-input').click()">
+          <input id="img-file-input" type="file" accept="image/*" class="hidden"/>
+          <div id="img-placeholder" class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-outline">
+            <span class="material-symbols-outlined text-[40px]">add_photo_alternate</span>
+            <p class="text-[13px] font-semibold" data-i18n="lbl_img_hint">Click to upload or drag an image</p>
+            <p class="text-[11px]">PNG, JPG, WEBP · max 5 MB</p>
+          </div>
+          <img id="img-preview" class="hidden w-full h-full object-cover"/>
+          <button id="img-remove-btn" onclick="event.stopPropagation();removeProductImage()" class="hidden absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center hover:bg-black/80 transition-colors">
+            <span class="material-symbols-outlined text-white text-[14px]">close</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Name + SKU -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="sf-label" for="ap-name" data-i18n="lbl_prod_name">Product Name</label>
+          <input id="ap-name" class="sf-input" type="text"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-sku" data-i18n="lbl_sku">SKU</label>
+          <input id="ap-sku" class="sf-input" type="text" placeholder="SF-XX-000"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-barcode" data-i18n="lbl_barcode">Barcode</label>
+          <input id="ap-barcode" class="sf-input" type="text" placeholder="0000-000-000"/>
+        </div>
+      </div>
+
+      <!-- Category + Manufacturer -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="sf-label" data-i18n="lbl_category">Category</label>
+          <div class="relative">
+            <select id="ap-category" class="sf-select">
+              <option value="Heavy Machinery" data-i18n="inv_heavy">Heavy Machinery</option>
+              <option value="Electronics" data-i18n="inv_electronics">Electronics</option>
+              <option value="Tools &amp; Parts" data-i18n="inv_tools">Tools &amp; Parts</option>
+              <option value="Raw Materials" data-i18n="inv_raw">Raw Materials</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+          </div>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-manufacturer" data-i18n="lbl_manufacturer">Manufacturer</label>
+          <input id="ap-manufacturer" class="sf-input" type="text"/>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="sf-label" for="ap-desc" data-i18n="lbl_description">Description</label>
+        <textarea id="ap-desc" class="sf-input resize-none" rows="3" style="line-height:1.5;"></textarea>
+      </div>
+
+      <!-- Stock -->
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="sf-label" for="ap-stock" data-i18n="lbl_stock">Current Stock</label>
+          <input id="ap-stock" class="sf-input" type="number" min="0" placeholder="0"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-minstock" data-i18n="lbl_min_stock">Min. Stock</label>
+          <input id="ap-minstock" class="sf-input" type="number" min="0" placeholder="0"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-maxstock" data-i18n="lbl_max_stock">Max. Stock</label>
+          <input id="ap-maxstock" class="sf-input" type="number" min="0" placeholder="0"/>
+        </div>
+      </div>
+
+      <!-- Warehouse + Location -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="sf-label" for="ap-warehouse" data-i18n="lbl_warehouse">Warehouse</label>
+          <div class="relative">
+            <select id="ap-warehouse" class="sf-select">
+              <option value="WH-01">WH-01 — Almacén Central</option>
+              <option value="WH-02">WH-02 — Zona Norte</option>
+              <option value="WH-03">WH-03 — Zona Sur</option>
+              <option value="WH-04">WH-04 — Distribución</option>
+              <option value="WH-05">WH-05 — Energía Solar</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+          </div>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-location" data-i18n="lbl_location">Location / Shelf</label>
+          <input id="ap-location" class="sf-input" type="text" placeholder="e.g. B12"/>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="sf-label" for="ap-cost" data-i18n="lbl_unit_cost">Unit Cost (USD)</label>
+          <input id="ap-cost" class="sf-input" type="number" min="0" step="0.01" placeholder="0.00"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-price" data-i18n="lbl_sell_price">Selling Price (USD)</label>
+          <input id="ap-price" class="sf-input" type="number" min="0" step="0.01" placeholder="0.00"/>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3 pt-2 pb-1">
+        <button id="add-product-cancel" class="flex-1 py-3 border-2 border-surface-container rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors" data-i18n="btn_cancel">Cancel</button>
+        <button id="add-product-save" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow hover:scale-105 active:scale-95 transition-all" data-i18n="btn_save">Save Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: Schedule Shipment ═══════════════ -->
+<div id="schedule-modal" class="modal-overlay">
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" onclick="event.stopPropagation()" style="max-height:92vh;overflow-y:auto;">
+    <div class="sticky top-0 bg-white px-7 py-5 border-b border-surface-container flex justify-between items-center z-10">
+      <div>
+        <h3 class="font-black text-[18px]" style="font-family:'Plus Jakarta Sans';" data-i18n="modal_ship_title">Schedule Shipment</h3>
+        <p class="text-[12px] text-outline mt-0.5" data-i18n="modal_ship_sub">Complete the fields to register a new outbound order</p>
+      </div>
+      <button id="schedule-modal-close" class="p-2 rounded-full hover:bg-surface-container transition-colors flex-shrink-0"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="px-7 py-6 space-y-6">
+
+      <!-- SECTION: Origin -->
+      <div>
+        <p class="text-[11px] font-black uppercase tracking-widest text-outline mb-3" data-i18n="ship_sec_origin">Origin</p>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label class="sf-label" data-i18n="lbl_warehouse">Warehouse</label>
+            <div class="relative">
+              <select id="sch-warehouse" class="sf-select">
+                <option value="WH-01">WH-01 — Almacén Central</option>
+                <option value="WH-02">WH-02 — Zona Norte</option>
+                <option value="WH-03">WH-03 — Zona Sur</option>
+                <option value="WH-04">WH-04 — Distribución</option>
+                <option value="WH-05">WH-05 — Energía Solar</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+            </div>
+          </div>
+          <div class="col-span-2">
+            <label class="sf-label" data-i18n="lbl_ship_product">Product</label>
+            <div class="relative">
+              <select id="sch-product" class="sf-select"></select>
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="sf-label" data-i18n="lbl_qty">Quantity to Ship</label>
+            <input id="sch-qty" class="sf-input" type="number" min="1" placeholder="0"/>
+          </div>
+          <div>
+            <label class="sf-label" data-i18n="lbl_ship_stock">Available Stock</label>
+            <div id="sch-stock-badge" class="sf-input flex items-center gap-2 cursor-default bg-surface-container-low text-on-surface font-semibold">—</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-surface-container"/>
+
+      <!-- SECTION: Shipping Address -->
+      <div>
+        <p class="text-[11px] font-black uppercase tracking-widest text-outline mb-3" data-i18n="ship_sec_address">Shipping Address</p>
+        <div class="space-y-3">
+          <div>
+            <label class="sf-label" data-i18n="lbl_ship_street">Street / Address</label>
+            <input id="sch-street" class="sf-input" type="text" placeholder="e.g. Av. Insurgentes 123"/>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="sf-label" data-i18n="lbl_ship_city">City</label>
+              <input id="sch-city" class="sf-input" type="text" placeholder="e.g. Ciudad de México"/>
+            </div>
+            <div>
+              <label class="sf-label" data-i18n="lbl_ship_postal">Postal Code</label>
+              <input id="sch-postal" class="sf-input" type="text" placeholder="00000"/>
+            </div>
+          </div>
+          <div>
+            <label class="sf-label" data-i18n="lbl_ship_country">Country</label>
+            <input id="sch-country" class="sf-input" type="text" placeholder="México"/>
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-surface-container"/>
+
+      <!-- SECTION: Customer -->
+      <div>
+        <p class="text-[11px] font-black uppercase tracking-widest text-outline mb-3" data-i18n="ship_sec_customer">Customer</p>
+        <div class="space-y-3">
+          <div>
+            <label class="sf-label" data-i18n="lbl_cust_name">Full Name</label>
+            <input id="sch-cust-name" class="sf-input" type="text" placeholder="e.g. María García"/>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="sf-label" data-i18n="lbl_cust_phone">Phone</label>
+              <input id="sch-cust-phone" class="sf-input" type="tel" placeholder="+52 55 0000 0000"/>
+            </div>
+            <div>
+              <label class="sf-label" data-i18n="lbl_cust_postal">Postal Code</label>
+              <input id="sch-cust-postal" class="sf-input" type="text" placeholder="00000"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-surface-container"/>
+
+      <!-- SECTION: Carrier + Date -->
+      <div>
+        <p class="text-[11px] font-black uppercase tracking-widest text-outline mb-3" data-i18n="ship_sec_carrier">Carrier &amp; Date</p>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="sf-label" data-i18n="lbl_carrier">Carrier</label>
+            <div class="relative">
+              <select id="sch-carrier" class="sf-select">
+                <option>DHL Express</option>
+                <option>FedEx</option>
+                <option>UPS Supply</option>
+                <option>Maersk</option>
+                <option>Schenker</option>
+                <option>Estafeta</option>
+                <option>Paquetexpress</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="sf-label" data-i18n="lbl_ship_date">Est. Delivery Date</label>
+            <input id="sch-date" class="sf-input" type="date"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buyer note -->
+      <div>
+        <label class="sf-label" data-i18n="lbl_buyer_note">Buyer Note</label>
+        <textarea id="sch-note" class="sf-input resize-none" rows="2" style="line-height:1.5;" data-i18n-placeholder="ph_buyer_note"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3 pt-1 pb-1">
+        <button id="schedule-modal-cancel" class="flex-1 py-3 border-2 border-surface-container rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors" data-i18n="btn_cancel">Cancel</button>
+        <button id="schedule-modal-save" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">schedule_send</span> <span data-i18n="btn_schedule">Schedule Shipment</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-28 right-10 z-[300] flex flex-col gap-2 items-end pointer-events-none"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  TRANSLATIONS
+// ═══════════════════════════════════════════
+let lang = 'en';
+const translations = {
+  en: {
+    nav_dashboard:'Dashboard', nav_inventory:'Inventory', nav_shipments:'Shipments',
+    nav_analytics:'Analytics', nav_history:'History', nav_support:'Support', nav_account:'Account',
+    notif_title:'Notifications', notif_mark_read:'Mark all read',
+    notif1_title:'Inbound received · WH-04', notif1_body:'+120 units of X-100',
+    notif2_title:'Low stock · Sensor ST-200', notif2_body:'Only 85 units remaining',
+    notif3_title:'Out of stock · Motor ME-75', notif3_body:'0 units available',
+    notif_2h:'2 hours ago', notif_5h:'5 hours ago', notif_yest:'Yesterday',
+    lbl_unit_cost:'Unit Cost (USD)', lbl_sell_price:'Selling Price (USD)',
+    lbl_calc_margin:'Calculated Margin', btn_cancel:'Cancel', btn_save:'Save',
+    modal_mv_title:'Register Movement', lbl_product:'Product',
+    lbl_action_type:'Action Type', lbl_warehouse:'Warehouse / Location',
+    lbl_resp_user:'Responsible User', lbl_qty:'Quantity', btn_register:'Register',
+    ph_warehouse:'e.g. WH-04 / B12', ph_user:'e.g. Jane Doe',
+    type_inbound:'INBOUND', type_outbound:'OUTBOUND', type_transfer:'TRANSFER',
+    // status
+    st_active:'ACTIVE', st_low:'LOW STOCK', st_critical:'CRITICAL', st_out:'OUT OF STOCK',
+    // home
+    greeting:'Good morning, Admin 👋', greeting_sub:"Here's what's happening in your warehouse today.",
+    btn_new_mv:'New Movement', btn_inventory:'Inventory',
+    kpi_products:'Total Products', kpi_value:'Total Stock Value',
+    kpi_active:'Products in Stock', kpi_low:'Need Attention',
+    badge_new:'+2 new', badge_urgent:'urgent',
+    section_alerts:'Stock Alerts', btn_manage:'Manage inventory →',
+    section_activity:'Recent Activity', btn_view_all:'View all →',
+    section_top:'Top Products by Value', btn_see_all:'See all →',
+    section_cats:'By Category', sub_cats:'Units in stock',
+    section_quick:'Quick Actions',
+    qa_entry:'Register Entry', qa_exit:'Register Exit',
+    qa_log:'Movement Log', qa_report:'Generate Report',
+    qa_scan:'Scan Item', qa_dispatch:'Dispatch', qa_audit:'Audit', qa_suppliers:'Suppliers',
+    all_stocked:'All products are well stocked',
+    // dashboard new
+    section_movements:'Stock Movements', sub_movements:'Entradas vs Salidas (Last 12 Months)',
+    legend_entry:'Entradas', legend_exit:'Salidas',
+    section_last_mv:'Last 5 Movements', sub_last_mv:'Real-time inventory ledger',
+    kpi_queue:'Queue', mv_done:'COMPLETED',
+    // inventory list
+    inv_list_title:'Inventory List', inv_list_sub:'Manage your products and global stock levels.',
+    btn_export_csv:'Export CSV', btn_add_item:'Add New Item',
+    inv_all_status:'All Status', inv_units:'Units',
+    col_sku:'SKU', col_category:'Category', col_stock:'Current Stock', col_price:'Unit Price', col_status:'Status',
+    no_results:'No products found.',
+    inv_products:'Products', inv_items:'items', inv_search:'Search product...',
+    inv_all_cats:'All categories',
+    inv_heavy:'Heavy Machinery', inv_electronics:'Electronics',
+    inv_tools:'Tools & Parts', inv_raw:'Raw Materials',
+    // detail
+    det_description:'Description', det_inv_status:'Inventory Status',
+    det_live:'Live stock count', det_units:'Current Units', det_capacity:'capacity',
+    det_min:'Min. Stock', det_location:'Location',
+    det_pricing:'Pricing Model', det_profit_sub:'Profit & Margin',
+    det_margin:'Profit Margin', det_cost:'Unit Cost', det_price:'Selling Price',
+    det_stock_val:'Stock Value', det_adjust:'Adjust Pricing',
+    det_demand:'Demand Trends', det_weekly:'Weekly orders',
+    det_export:'Export', det_history_btn:'History',
+    det_mv_history:'Movement History', det_mv_sub:'Latest logs for',
+    det_view_all:'View All', det_reg_mv:'Register Movement',
+    col_date:'Date & Time', col_action:'Action', col_warehouse:'Warehouse',
+    col_user:'User', col_change:'Change', col_balance:'Balance',
+    no_movements:'No movements recorded yet', back_list:'Back to list',
+    // history page
+    hist_title:'Movement History', hist_sub:'Complete audit log',
+    hist_all:'All types',
+    col_product:'Product',
+    // coming soon
+    cs_analytics:'Advanced analytics coming soon.',
+    // shipments
+    ship_title:'Shipment Management', ship_sub:'Monitor and coordinate global logistics in real time.',
+    btn_schedule:'Schedule Shipment', ship_scheduled:'Shipment scheduled',
+    ship_kpi_transit:'In Transit', ship_kpi_delivered:'Delivered Today', ship_units:'units',
+    ship_kpi_delay:'Delay Alerts',
+    ship_table_title:'Cargo Tracking',
+    ship_col_id:'Shipment ID', ship_col_dest:'Recipient', ship_col_carrier:'Carrier',
+    ship_col_date:'Est. Date', ship_col_status:'Status',
+    ship_route_title:'Active Route Detail', ship_location:'Current Location',
+    ship_step1:'Origin Departure', ship_step2:'International Transit', ship_step3:'Arrival at Destination',
+    ship_btn_docs:'View Documentation', ship_docs_toast:'Documentation opened',
+    ship_st_transit:'In Transit', ship_st_delivered:'Delivered', ship_st_delayed:'Delayed', ship_st_processing:'Processing',
+    // toasts
+    toast_notif_read:'All notifications marked as read',
+    toast_export:'Export started',
+    toast_report:'Report generated successfully',
+    toast_bad_price:'Enter valid prices',
+    toast_price_cost:'Selling price must exceed cost',
+    toast_pricing_ok:'Pricing updated for',
+    toast_no_wh:'Enter a warehouse location',
+    toast_no_user:'Enter a responsible user',
+    toast_no_qty:'Enter a valid quantity',
+    toast_no_stock:'Insufficient stock for this operation',
+    toast_prod_added:'Product added to inventory',
+    toast_prod_required:'Name and SKU are required',
+    toast_ship_address:'Enter a shipping address', toast_ship_cust:'Enter customer name', toast_ship_phone:'Enter customer phone',
+    // schedule shipment modal
+    modal_ship_title:'Schedule Shipment', modal_ship_sub:'Complete the fields to register a new outbound order',
+    ship_sec_origin:'Origin', ship_sec_address:'Shipping Address', ship_sec_customer:'Customer', ship_sec_carrier:'Carrier & Date',
+    lbl_ship_product:'Product', lbl_ship_stock:'Available Stock',
+    lbl_ship_street:'Street / Address', lbl_ship_city:'City', lbl_ship_postal:'Postal Code', lbl_ship_country:'Country',
+    lbl_cust_name:'Full Name', lbl_cust_phone:'Phone', lbl_cust_postal:'Postal Code',
+    lbl_carrier:'Carrier', lbl_ship_date:'Est. Delivery Date',
+    lbl_buyer_note:'Buyer Note', ph_buyer_note:'Special instructions or comments…',
+    // add product modal
+    modal_add_title:'Add New Product',
+    lbl_image:'Product Image', lbl_img_hint:'Click to upload or drag an image',
+    lbl_prod_name:'Product Name', lbl_sku:'SKU', lbl_barcode:'Barcode',
+    lbl_category:'Category', lbl_manufacturer:'Manufacturer',
+    lbl_description:'Description',
+    lbl_stock:'Current Stock', lbl_min_stock:'Min. Stock', lbl_max_stock:'Max. Stock',
+    lbl_location:'Location / Shelf',
+    btn_save:'Save Product',
+    // breadcrumbs
+    bc_home:'Home', bc_dashboard:'Dashboard',
+    bc_inventory:'Inventory', bc_products:'Products',
+    bc_logistics:'Logistics', bc_reports:'Reports',
+    bc_mv_history:'Movement History',
+  },
+  es: {
+    nav_dashboard:'Inicio', nav_inventory:'Inventario', nav_shipments:'Envíos',
+    nav_analytics:'Analítica', nav_history:'Historial', nav_support:'Soporte', nav_account:'Cuenta',
+    notif_title:'Notificaciones', notif_mark_read:'Marcar todo leído',
+    notif1_title:'Entrada recibida · WH-04', notif1_body:'+120 unidades de X-100',
+    notif2_title:'Stock bajo · Sensor ST-200', notif2_body:'Solo 85 unidades restantes',
+    notif3_title:'Sin stock · Motor ME-75', notif3_body:'0 unidades disponibles',
+    notif_2h:'Hace 2 horas', notif_5h:'Hace 5 horas', notif_yest:'Ayer',
+    lbl_unit_cost:'Costo Unitario (USD)', lbl_sell_price:'Precio de Venta (USD)',
+    lbl_calc_margin:'Margen Calculado', btn_cancel:'Cancelar', btn_save:'Guardar',
+    modal_mv_title:'Registrar Movimiento', lbl_product:'Producto',
+    lbl_action_type:'Tipo de Acción', lbl_warehouse:'Almacén / Ubicación',
+    lbl_resp_user:'Usuario Responsable', lbl_qty:'Cantidad', btn_register:'Registrar',
+    ph_warehouse:'ej. WH-04 / B12', ph_user:'ej. Jane Doe',
+    type_inbound:'ENTRADA', type_outbound:'SALIDA', type_transfer:'TRANSFERENCIA',
+    st_active:'ACTIVO', st_low:'STOCK BAJO', st_critical:'CRÍTICO', st_out:'SIN STOCK',
+    greeting:'Buenos días, Admin 👋', greeting_sub:'Esto es lo que ocurre en tu almacén hoy.',
+    btn_new_mv:'Nuevo Movimiento', btn_inventory:'Inventario',
+    kpi_products:'Total de Productos', kpi_value:'Valor del Inventario',
+    kpi_active:'Productos en Stock', kpi_low:'Requieren Atención',
+    badge_new:'+2 nuevos', badge_urgent:'urgente',
+    section_alerts:'Alertas de Stock', btn_manage:'Gestionar inventario →',
+    section_activity:'Actividad Reciente', btn_view_all:'Ver todo →',
+    section_top:'Top Productos por Valor', btn_see_all:'Ver todo →',
+    section_cats:'Por Categoría', sub_cats:'Unidades en stock',
+    section_quick:'Acciones Rápidas',
+    qa_entry:'Registrar Entrada', qa_exit:'Registrar Salida',
+    qa_log:'Historial', qa_report:'Generar Reporte',
+    qa_scan:'Escanear', qa_dispatch:'Despacho', qa_audit:'Auditoría', qa_suppliers:'Proveedores',
+    all_stocked:'Todos los productos tienen stock suficiente',
+    section_movements:'Movimientos de Stock', sub_movements:'Entradas vs Salidas (Últimos 12 Meses)',
+    legend_entry:'Entradas', legend_exit:'Salidas',
+    section_last_mv:'Últimos 5 Movimientos', sub_last_mv:'Libro de inventario en tiempo real',
+    kpi_queue:'En Cola', mv_done:'COMPLETADO',
+    inv_list_title:'Lista de Inventario', inv_list_sub:'Gestione sus productos y niveles de stock globales.',
+    btn_export_csv:'Exportar CSV', btn_add_item:'Agregar Producto',
+    inv_all_status:'Todo el Estado', inv_units:'Unidades',
+    col_sku:'SKU', col_category:'Categoría', col_stock:'Stock Actual', col_price:'Precio Unit.', col_status:'Estado',
+    no_results:'No se encontraron productos.',
+    inv_products:'Productos', inv_items:'artículos', inv_search:'Buscar producto...',
+    inv_all_cats:'Todas las categorías',
+    inv_heavy:'Maquinaria Pesada', inv_electronics:'Electrónica',
+    inv_tools:'Herramientas', inv_raw:'Materias Primas',
+    det_description:'Descripción', det_inv_status:'Estado del Inventario',
+    det_live:'Conteo de stock en vivo', det_units:'Unidades Actuales', det_capacity:'capacidad',
+    det_min:'Stock Mín.', det_location:'Ubicación',
+    det_pricing:'Modelo de Precios', det_profit_sub:'Rentabilidad',
+    det_margin:'Margen de Ganancia', det_cost:'Costo Unitario', det_price:'Precio de Venta',
+    det_stock_val:'Valor en Stock', det_adjust:'Ajustar Precios',
+    det_demand:'Tendencia de Demanda', det_weekly:'Pedidos semanales',
+    det_export:'Exportar', det_history_btn:'Historial',
+    det_mv_history:'Historial de Movimientos', det_mv_sub:'Últimos registros de',
+    det_view_all:'Ver Todo', det_reg_mv:'Registrar Movimiento',
+    col_date:'Fecha y Hora', col_action:'Acción', col_warehouse:'Almacén',
+    col_user:'Usuario', col_change:'Cambio', col_balance:'Saldo',
+    no_movements:'Sin movimientos registrados', back_list:'Volver a la lista',
+    hist_title:'Historial de Movimientos', hist_sub:'Registro de auditoría completo',
+    hist_all:'Todos los tipos',
+    col_product:'Producto',
+    cs_shipments:'Próximamente — gestiona envíos entrantes y salientes desde aquí.',
+    cs_analytics:'Analítica avanzada próximamente.',
+    // shipments
+    ship_title:'Gestión de Envíos', ship_sub:'Supervisa y coordina la logística global en tiempo real.',
+    btn_schedule:'Agendar Envío', ship_scheduled:'Envío agendado',
+    ship_kpi_transit:'En Tránsito', ship_kpi_delivered:'Entregados Hoy', ship_units:'unidades',
+    ship_kpi_delay:'Alertas de Retraso',
+    ship_table_title:'Seguimiento de Cargas',
+    ship_col_id:'ID Envío', ship_col_dest:'Destinatario', ship_col_carrier:'Transportista',
+    ship_col_date:'Fecha Est.', ship_col_status:'Estado',
+    ship_route_title:'Detalle de Ruta Activa', ship_location:'Ubicación Actual',
+    ship_step1:'Salida de Origen', ship_step2:'Tránsito Internacional', ship_step3:'Llegada a Destino',
+    ship_btn_docs:'Ver Documentación', ship_docs_toast:'Documentación abierta',
+    ship_st_transit:'En Tránsito', ship_st_delivered:'Entregado', ship_st_delayed:'Retrasado', ship_st_processing:'Procesando',
+    toast_notif_read:'Notificaciones marcadas como leídas',
+    toast_export:'Exportación iniciada',
+    toast_report:'Reporte generado exitosamente',
+    toast_bad_price:'Ingresa precios válidos',
+    toast_price_cost:'El precio de venta debe superar el costo',
+    toast_pricing_ok:'Precios actualizados para',
+    toast_no_wh:'Ingresa una ubicación de almacén',
+    toast_no_user:'Ingresa un usuario responsable',
+    toast_no_qty:'Ingresa una cantidad válida',
+    toast_no_stock:'Stock insuficiente para esta operación',
+    toast_prod_added:'Producto agregado al inventario',
+    toast_prod_required:'Nombre y SKU son obligatorios',
+    toast_ship_address:'Ingresa una dirección de envío', toast_ship_cust:'Ingresa el nombre del cliente', toast_ship_phone:'Ingresa el teléfono del cliente',
+    modal_ship_title:'Agendar Envío', modal_ship_sub:'Completa los campos para registrar una nueva orden de salida',
+    ship_sec_origin:'Origen', ship_sec_address:'Dirección de Envío', ship_sec_customer:'Cliente', ship_sec_carrier:'Transportista y Fecha',
+    lbl_ship_product:'Producto', lbl_ship_stock:'Stock Disponible',
+    lbl_ship_street:'Calle / Dirección', lbl_ship_city:'Ciudad', lbl_ship_postal:'Código Postal', lbl_ship_country:'País',
+    lbl_cust_name:'Nombre Completo', lbl_cust_phone:'Teléfono', lbl_cust_postal:'Código Postal',
+    lbl_carrier:'Transportista', lbl_ship_date:'Fecha Est. de Entrega',
+    lbl_buyer_note:'Nota del Comprador', ph_buyer_note:'Instrucciones especiales o comentarios…',
+    modal_add_title:'Agregar Producto',
+    lbl_image:'Imagen del Producto', lbl_img_hint:'Haz clic para subir o arrastra una imagen',
+    lbl_prod_name:'Nombre del Producto', lbl_sku:'SKU', lbl_barcode:'Código de Barras',
+    lbl_category:'Categoría', lbl_manufacturer:'Fabricante',
+    lbl_description:'Descripción',
+    lbl_stock:'Stock Actual', lbl_min_stock:'Stock Mín.', lbl_max_stock:'Stock Máx.',
+    lbl_location:'Ubicación / Estante',
+    btn_save:'Guardar Producto',
+    bc_home:'Inicio', bc_dashboard:'Panel',
+    bc_inventory:'Inventario', bc_products:'Productos',
+    bc_logistics:'Logística', bc_reports:'Reportes',
+    bc_mv_history:'Historial de Movimientos',
+  }
+};
+function tr(key){ return (translations[lang]&&translations[lang][key]) || translations.en[key] || key; }
+
+function applyTranslations(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    el.textContent = tr(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    el.placeholder = tr(el.dataset.i18nPlaceholder);
+  });
+  document.getElementById('search-input').placeholder = tr('inv_search');
+  document.getElementById('list-search').placeholder   = tr('inv_search');
+  // category filter options
+  const cf = document.getElementById('cat-filter');
+  if(cf){
+    cf.options[0].text = tr('inv_all_cats');
+    cf.options[1].text = tr('inv_heavy');
+    cf.options[2].text = tr('inv_electronics');
+    cf.options[3].text = tr('inv_tools');
+    cf.options[4].text = tr('inv_raw');
+  }
+  // status filter options
+  const sf = document.getElementById('status-filter');
+  if(sf){
+    sf.options[0].text = tr('inv_all_status');
+    sf.options[1].text = tr('st_active');
+    sf.options[2].text = tr('st_low');
+    sf.options[3].text = tr('st_critical');
+    sf.options[4].text = tr('st_out');
+  }
+  // history filter options
+  const hf = document.getElementById('history-filter');
+  if(hf){
+    hf.options[0].text = tr('hist_all');
+    hf.options[1].text = tr('type_inbound');
+    hf.options[2].text = tr('type_outbound');
+    hf.options[3].text = tr('type_transfer');
+  }
+  // mv-type options
+  const mt = document.getElementById('mv-type');
+  if(mt){
+    mt.options[0].text = tr('type_inbound');
+    mt.options[1].text = tr('type_outbound');
+    mt.options[2].text = tr('type_transfer');
+  }
+}
+
+function toggleLang(){
+  lang = lang === 'en' ? 'es' : 'en';
+  document.getElementById('lang-label').textContent = lang === 'en' ? 'ES' : 'EN';
+  applyTranslations();
+  // re-render active page
+  const active = document.querySelector('[id^="page-"]:not([style*="display: none"]):not([style*="display:none"])');
+  if(active){
+    const pg = active.id.replace('page-','');
+    if(pg==='dashboard') renderDashboard();
+    else if(pg==='inventory'){
+      const detailVisible=document.getElementById('inv-detail-view').style.display!=='none';
+      if(detailVisible) renderDetail(selectedId);
+      else renderProductList(document.getElementById('list-search').value,document.getElementById('cat-filter').value,document.getElementById('status-filter').value);
+    }
+    else if(pg==='shipments') renderShipments();
+    else if(pg==='history') renderHistory(document.getElementById('history-filter').value);
+  }
+  // re-render breadcrumbs
+  updateBreadcrumbs(currentPage);
+}
+
+// ═══════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════
+const products = [
+  {
+    id:1, name:'Procesador Industrial X-100', sku:'SF-PR-100X', barcode:'7421-988-210',
+    category:'Heavy Machinery', manufacturer:'Aether Tech',
+    stock:1240, maxStock:1650, minStock:250, location:'WH-04 / B12',
+    unitCost:2140, sellingPrice:3780,
+    icon:'memory', iconBg:'#dae2fd', iconColor:'#131b2e',
+    description:'High-performance processor engineered for 24/7 heavy-duty manufacturing. Features real-time thermal monitoring, modular component swapping, and automated throughput optimization. Built with military-grade alloys.',
+    tags:['Modular Architecture','Thermal Shielding','IoT Ready'],
+    image:null,
+    movements:[
+      {date:'Oct 24, 09:12 AM',type:'INBOUND', warehouse:'Warehouse Global A',   user:'John Doe',   initials:'JD',color:'blue',  change:+120,balance:1240},
+      {date:'Oct 23, 02:45 PM',type:'TRANSFER',warehouse:'WH-A to WH-B',         user:'Sarah Alv.', initials:'SA',color:'purple',change:-45, balance:1120},
+      {date:'Oct 21, 11:30 AM',type:'OUTBOUND',warehouse:'Customer Fulfillment', user:'Mike Koz.',  initials:'MK',color:'rose',  change:-210,balance:1165},
+      {date:'Oct 19, 08:00 AM',type:'INBOUND', warehouse:'Warehouse Global A',   user:'John Doe',   initials:'JD',color:'blue',  change:+300,balance:1375},
+    ]
+  },
+  {
+    id:2, name:'Sensor de Temperatura ST-200', sku:'SF-ST-200', barcode:'8832-441-019',
+    category:'Electronics', manufacturer:'SenseTech',
+    stock:85, maxStock:500, minStock:100, location:'WH-02 / A04',
+    unitCost:380, sellingPrice:720,
+    icon:'thermostat', iconBg:'#fcdeb5', iconColor:'#574425',
+    description:'Precision industrial temperature sensor with ±0.1°C accuracy and IP67 waterproofing. Supports MODBUS RTU and 4–20 mA outputs. Designed for extreme environments from -40°C to +200°C.',
+    tags:['IP67 Waterproof','MODBUS RTU','Wide Range'],
+    image:null,
+    movements:[
+      {date:'Oct 22, 10:00 AM',type:'OUTBOUND',warehouse:'Client Site B',         user:'Ana Lopez',  initials:'AL',color:'green', change:-50, balance:85},
+      {date:'Oct 20, 03:00 PM',type:'INBOUND', warehouse:'WH-02',                 user:'John Doe',   initials:'JD',color:'blue',  change:+200,balance:135},
+      {date:'Oct 18, 09:30 AM',type:'OUTBOUND',warehouse:'Client Site A',         user:'Sarah Alv.', initials:'SA',color:'purple',change:-65, balance:-65+200},
+    ]
+  },
+  {
+    id:3, name:'Compresor Neumático CP-450', sku:'SF-CP-450', barcode:'3319-774-882',
+    category:'Heavy Machinery', manufacturer:'AirForce Ind.',
+    stock:520, maxStock:800, minStock:150, location:'WH-01 / C07',
+    unitCost:5200, sellingPrice:8900,
+    icon:'air', iconBg:'#e0e3e5', iconColor:'#45464d',
+    description:'Heavy-duty pneumatic compressor delivering 450 L/min at 10 bar. Direct-drive motor, oil-free cylinder design. Ideal for production lines, automotive workshops and industrial painting systems.',
+    tags:['Oil-Free','10 Bar','450 L/min'],
+    image:null,
+    movements:[
+      {date:'Oct 23, 11:00 AM',type:'INBOUND', warehouse:'WH-01',                 user:'Mike Koz.',  initials:'MK',color:'rose',  change:+100,balance:520},
+      {date:'Oct 20, 02:00 PM',type:'OUTBOUND',warehouse:'Factory Floor 3',       user:'John Doe',   initials:'JD',color:'blue',  change:-80, balance:420},
+      {date:'Oct 17, 08:45 AM',type:'INBOUND', warehouse:'WH-01',                 user:'Ana Lopez',  initials:'AL',color:'green', change:+200,balance:500},
+    ]
+  },
+  {
+    id:4, name:'Cable Fibra Óptica FO-12', sku:'SF-FO-12', barcode:'5527-663-100',
+    category:'Raw Materials', manufacturer:'OpticNet',
+    stock:3200, maxStock:5000, minStock:500, location:'WH-03 / D01',
+    unitCost:12, sellingPrice:28,
+    icon:'cable', iconBg:'#d3e4fe', iconColor:'#131b2e',
+    description:'12-core single-mode fiber optic cable, OS2 grade. Zero-water-peak (ZWP), LSZH jacket for safe indoor use. Supports 10G/40G/100G Ethernet over distances up to 10 km.',
+    tags:['OS2 Single-Mode','LSZH Jacket','100G Ready'],
+    image:null,
+    movements:[
+      {date:'Oct 21, 01:00 PM',type:'OUTBOUND',warehouse:'Data Center Install',   user:'Sarah Alv.', initials:'SA',color:'purple',change:-800,balance:3200},
+      {date:'Oct 19, 09:00 AM',type:'INBOUND', warehouse:'WH-03',                 user:'John Doe',   initials:'JD',color:'blue',  change:+2000,balance:4000},
+      {date:'Oct 15, 04:00 PM',type:'OUTBOUND',warehouse:'Client Offices',        user:'Mike Koz.',  initials:'MK',color:'rose',  change:-500,balance:2000},
+    ]
+  },
+  {
+    id:5, name:'Motor Eléctrico ME-75', sku:'SF-ME-75', barcode:'6641-229-558',
+    category:'Electronics', manufacturer:'DriveTech',
+    stock:0, maxStock:200, minStock:20, location:'WH-02 / B09',
+    unitCost:1850, sellingPrice:3200,
+    icon:'electric_bolt', iconBg:'#ffdad6', iconColor:'#ba1a1a',
+    description:'75 kW three-phase induction motor, IE3 energy efficiency class. Cast iron frame with IP55 protection. Designed for pumps, fans, conveyors, and compressors in demanding industrial settings.',
+    tags:['IE3 Efficiency','IP55','Cast Iron'],
+    image:null,
+    movements:[
+      {date:'Oct 24, 07:00 AM',type:'OUTBOUND',warehouse:'Plant Expansion A',     user:'Ana Lopez',  initials:'AL',color:'green', change:-10, balance:0},
+      {date:'Oct 20, 10:00 AM',type:'OUTBOUND',warehouse:'Maintenance Dept.',     user:'John Doe',   initials:'JD',color:'blue',  change:-15, balance:10},
+      {date:'Oct 10, 02:00 PM',type:'INBOUND', warehouse:'WH-02',                 user:'Sarah Alv.', initials:'SA',color:'purple',change:+25, balance:25},
+    ]
+  },
+  {
+    id:6, name:'Válvula de Control VC-300', sku:'SF-VC-300', barcode:'9930-118-742',
+    category:'Tools & Parts', manufacturer:'FlowMaster',
+    stock:180, maxStock:600, minStock:200, location:'WH-04 / A02',
+    unitCost:420, sellingPrice:780,
+    icon:'valve', iconBg:'#e0e3e5', iconColor:'#45464d',
+    description:'Pneumatic 3-way control valve DN50 with stainless steel body and PTFE seat. PN40 rated. Compatible with PLC automation systems. Used in chemical processing, HVAC and fluid control applications.',
+    tags:['DN50','PN40','PTFE Seat'],
+    image:null,
+    movements:[
+      {date:'Oct 23, 08:30 AM',type:'OUTBOUND',warehouse:'Chemical Plant 1',      user:'Mike Koz.',  initials:'MK',color:'rose',  change:-120,balance:180},
+      {date:'Oct 18, 11:00 AM',type:'INBOUND', warehouse:'WH-04',                 user:'John Doe',   initials:'JD',color:'blue',  change:+300,balance:300},
+      {date:'Oct 14, 03:45 PM',type:'OUTBOUND',warehouse:'HVAC Project B',        user:'Ana Lopez',  initials:'AL',color:'green', change:-80, balance:0},
+    ]
+  },
+  {
+    id:7, name:'Panel Solar PS-500W', sku:'SF-PS-500', barcode:'2214-997-333',
+    category:'Electronics', manufacturer:'SolarEdge',
+    stock:95, maxStock:300, minStock:50, location:'WH-05 / E03',
+    unitCost:280, sellingPrice:520,
+    icon:'solar_power', iconBg:'#fcdeb5', iconColor:'#574425',
+    description:'Monocrystalline 500W solar panel with 21.5% efficiency. Half-cut cell technology for better shade tolerance. Anodized aluminum frame, tempered glass front. 25-year linear power warranty.',
+    tags:['Half-Cut Cell','21.5% Efficiency','25-yr Warranty'],
+    image:null,
+    movements:[
+      {date:'Oct 22, 09:00 AM',type:'INBOUND', warehouse:'WH-05',                 user:'Sarah Alv.', initials:'SA',color:'purple',change:+100,balance:95},
+      {date:'Oct 19, 02:30 PM',type:'OUTBOUND',warehouse:'Solar Farm Project',    user:'Mike Koz.',  initials:'MK',color:'rose',  change:-55, balance:-5},
+      {date:'Oct 15, 10:00 AM',type:'INBOUND', warehouse:'WH-05',                 user:'Ana Lopez',  initials:'AL',color:'green', change:+50, balance:50},
+    ]
+  },
+  {
+    id:8, name:'Tornillería Industrial TI-M8', sku:'SF-TI-M8', barcode:'7750-002-411',
+    category:'Tools & Parts', manufacturer:'BoltPro',
+    stock:8500, maxStock:15000, minStock:2000, location:'WH-01 / F12',
+    unitCost:0.45, sellingPrice:1.20,
+    icon:'hardware', iconBg:'#e5eeff', iconColor:'#45464d',
+    description:'M8 hexagonal-head bolts and nuts, grade 8.8 zinc-plated steel. DIN 933/934 standard. Sold in bags of 100 units. Suitable for structural assemblies, machinery maintenance and general industrial use.',
+    tags:['Grade 8.8','Zinc-Plated','DIN 933/934'],
+    image:null,
+    movements:[
+      {date:'Oct 24, 06:00 AM',type:'INBOUND', warehouse:'WH-01',                 user:'John Doe',   initials:'JD',color:'blue',  change:+3000,balance:8500},
+      {date:'Oct 21, 08:00 AM',type:'OUTBOUND',warehouse:'Maintenance Stock',     user:'Mike Koz.',  initials:'MK',color:'rose',  change:-1500,balance:5500},
+      {date:'Oct 17, 01:00 PM',type:'INBOUND', warehouse:'WH-01',                 user:'Sarah Alv.', initials:'SA',color:'purple',change:+4000,balance:7000},
+    ]
+  },
+];
+
+// Currently selected product id
+let selectedId = 1;
+
+// ═══════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════
+function fmt(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtInt(n){return n.toLocaleString('en-US');}
+function margin(c,p){return p>0&&c>=0?(((p-c)/p)*100).toFixed(1)+'%':'—';}
+function getProduct(id){return products.find(p=>p.id===id);}
+
+function stockStatus(p){
+  if(p.stock===0)             return {label:tr('st_out'),      bg:'bg-red-100',   text:'text-red-700',   dot:'bg-red-500'};
+  if(p.stock<p.minStock)      return {label:tr('st_critical'), bg:'bg-red-100',   text:'text-red-700',   dot:'bg-red-500'};
+  if(p.stock<p.minStock*1.5)  return {label:tr('st_low'),      bg:'bg-amber-100', text:'text-amber-700', dot:'bg-amber-500'};
+  return                             {label:tr('st_active'),   bg:'bg-emerald-100',text:'text-emerald-700',dot:'bg-emerald-500'};
+}
+
+function typeStyles(type){
+  if(type==='INBOUND')  return 'bg-emerald-100 text-emerald-700';
+  if(type==='OUTBOUND') return 'bg-red-100 text-red-700';
+  return 'bg-amber-100 text-amber-700';
+}
+function changeClass(c){return c>0?'text-emerald-600':c<0?'text-red-600':'text-outline';}
+function changeLabel(c){return c>0?'+'+fmtInt(c):fmtInt(c);}
+
+function showToast(msg,type='success'){
+  const tc=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  const icon=type==='success'?'check_circle':'error';
+  const bg=type==='success'?'bg-emerald-600':'bg-red-600';
+  t.className=`toast flex items-center gap-3 ${bg} text-white px-5 py-3.5 rounded-2xl shadow-2xl pointer-events-auto`;
+  t.innerHTML=`<span class="material-symbols-outlined text-[20px]" style="font-variation-settings:'FILL' 1;">${icon}</span><span class="text-[14px] font-semibold">${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),300);},3000);
+}
+
+// ═══════════════════════════════════════════
+//  PRODUCT LIST RENDER
+// ═══════════════════════════════════════════
+function renderProductList(filter='',catFilter='',statusFilter=''){
+  const tbody=document.getElementById('product-list');
+  const q=filter.toLowerCase();
+  let filtered=products.filter(p=>{
+    const matchText=!q||(p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q));
+    const matchCat=!catFilter||p.category===catFilter;
+    return matchText&&matchCat;
+  });
+  if(statusFilter){
+    filtered=filtered.filter(p=>{
+      if(statusFilter==='out') return p.stock===0;
+      if(statusFilter==='critical') return p.stock>0&&p.stock<p.minStock;
+      if(statusFilter==='low') return p.stock>=p.minStock&&p.stock<p.minStock*1.5;
+      if(statusFilter==='active') return p.stock>=p.minStock*1.5;
+      return true;
+    });
+  }
+  document.getElementById('product-count').textContent=filtered.length;
+  tbody.innerHTML='';
+  if(filtered.length===0){
+    tbody.innerHTML=`<tr><td colspan="7" class="text-center text-outline py-10 text-[13px]">${tr('no_results')}</td></tr>`;
+    return;
+  }
+  filtered.forEach(p=>{
+    const st=stockStatus(p);
+    const row=document.createElement('tr');
+    row.className='hover:bg-surface-container-low transition-colors cursor-pointer';
+    row.innerHTML=`
+      <td class="px-5 py-4 text-[12px] font-mono text-outline font-semibold">${p.sku}</td>
+      <td class="px-5 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:${p.iconBg}">
+            <span class="material-symbols-outlined text-[20px]" style="color:${p.iconColor};font-variation-settings:'FILL' 1;">${p.icon}</span>
+          </div>
+          <div>
+            <p class="font-semibold text-[14px] text-on-surface">${p.name}</p>
+            <p class="text-[11px] text-outline">${p.manufacturer}</p>
+          </div>
+        </div>
+      </td>
+      <td class="px-5 py-4">
+        <span class="px-2.5 py-1 bg-surface-container rounded-full text-[12px] font-medium text-on-surface-variant">${p.category}</span>
+      </td>
+      <td class="px-5 py-4 text-[14px] font-semibold">${fmtInt(p.stock)} <span class="text-outline font-normal text-[12px]">${tr('inv_units')}</span></td>
+      <td class="px-5 py-4 text-[14px] font-semibold">$${fmt(p.sellingPrice)}</td>
+      <td class="px-5 py-4">
+        <span class="px-2.5 py-1 rounded-full ${st.bg} ${st.text} text-[11px] font-bold inline-flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full ${st.dot} inline-block"></span>${st.label}
+        </span>
+      </td>
+      <td class="px-5 py-4">
+        <button class="p-1.5 rounded-full hover:bg-surface-container transition-colors text-outline" onclick="event.stopPropagation()">
+          <span class="material-symbols-outlined text-[18px]">more_vert</span>
+        </button>
+      </td>`;
+    row.addEventListener('click',()=>selectProduct(p.id));
+    tbody.appendChild(row);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  PRODUCT DETAIL RENDER
+// ═══════════════════════════════════════════
+function renderDetail(id){
+  const p=getProduct(id);
+  if(!p) return;
+  const st=stockStatus(p);
+  const pct=Math.min(100,Math.round((p.stock/p.maxStock)*100));
+  const mgn=margin(p.unitCost,p.sellingPrice);
+
+  // Image or colored placeholder
+  const imageHtml=p.image
+    ? `<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="${p.image}" alt="${p.name}"/>`
+    : `<div class="w-full h-full flex flex-col items-center justify-center gap-4" style="background:${p.iconBg}">
+        <span class="material-symbols-outlined text-[80px]" style="color:${p.iconColor};font-variation-settings:'FILL' 1;">${p.icon}</span>
+        <p class="text-[13px] font-bold" style="color:${p.iconColor}">${p.category}</p>
+       </div>`;
+
+  // Movement rows
+  const mvRows=p.movements.slice(0,4).map(mv=>`
+    <tr class="hover:bg-surface/50 transition-colors">
+      <td class="px-5 py-3.5 text-[13px]">${mv.date}</td>
+      <td class="px-5 py-3.5"><span class="px-2 py-0.5 rounded-full ${typeStyles(mv.type)} text-[11px] font-bold">${mv.type}</span></td>
+      <td class="px-5 py-3.5 text-[13px]">${mv.warehouse}</td>
+      <td class="px-5 py-3.5">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-${mv.color}-100 flex items-center justify-center text-[10px] font-bold">${mv.initials}</div>
+          <span class="text-[13px]">${mv.user}</span>
+        </div>
+      </td>
+      <td class="px-5 py-3.5 font-bold ${changeClass(mv.change)}">${changeLabel(mv.change)}</td>
+      <td class="px-5 py-3.5 font-bold text-right">${fmtInt(mv.balance)}</td>
+    </tr>`).join('');
+
+  document.getElementById('detail-panel').innerHTML=`
+    <!-- Hero -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Left info -->
+      <div class="lg:col-span-7 space-y-5">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="font-headline-lg text-headline-lg text-on-surface" style="font-size:clamp(22px,3vw,32px);">${p.name}</h2>
+          <span class="px-3 py-1.5 rounded-full ${st.bg} ${st.text} text-[12px] font-bold flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full ${st.dot} ${st.label==='ACTIVE'?'animate-pulse':''}"></span>${st.label}
+          </span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3 rounded-xl bg-white/50 border border-white/30">
+            <p class="text-[10px] uppercase font-bold text-outline mb-1">SKU</p>
+            <p class="font-bold text-[13px] text-primary">${p.sku}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-white/50 border border-white/30">
+            <p class="text-[10px] uppercase font-bold text-outline mb-1">Barcode</p>
+            <p class="font-bold text-[13px] text-primary">${p.barcode}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-white/50 border border-white/30">
+            <p class="text-[10px] uppercase font-bold text-outline mb-1">Category</p>
+            <p class="font-bold text-[13px] text-primary">${p.category}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-white/50 border border-white/30">
+            <p class="text-[10px] uppercase font-bold text-outline mb-1">Manufacturer</p>
+            <p class="font-bold text-[13px] text-primary">${p.manufacturer}</p>
+          </div>
+        </div>
+        <div class="glass-card p-5">
+          <h3 class="font-headline-md text-headline-md mb-3" style="font-size:18px;">${tr('det_description')}</h3>
+          <p class="text-[15px] text-on-surface-variant leading-relaxed">${p.description}</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            ${p.tags.map(t=>`<span class="px-3 py-1 bg-surface-container rounded-md text-on-surface-variant text-[12px] font-medium">${t}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+      <!-- Right image -->
+      <div class="lg:col-span-5">
+        <div class="glass-card p-4 flex flex-col items-center relative group">
+          <div class="w-full aspect-square rounded-xl overflow-hidden bg-surface-container-lowest">
+            ${imageHtml}
+          </div>
+          <div class="w-full mt-4 flex justify-between items-center px-2">
+            <div class="flex -space-x-2">
+              <div class="w-7 h-7 rounded-full border-2 border-white bg-slate-200"></div>
+              <div class="w-7 h-7 rounded-full border-2 border-white bg-slate-300"></div>
+              <div class="w-7 h-7 rounded-full border-2 border-white bg-slate-400"></div>
+            </div>
+            <button class="text-primary font-label-md text-label-md flex items-center gap-1 text-[13px] group/btn" onclick="openMovementModal(${p.id})">
+              ${tr('det_reg_mv')} <span class="material-symbols-outlined text-[16px] group-hover/btn:translate-x-1 transition-transform">arrow_right_alt</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Management Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <!-- Inventory Status -->
+      <div class="glass-card p-5">
+        <div class="flex justify-between items-start mb-6">
+          <div><h3 class="font-bold text-[16px]">${tr('det_inv_status')}</h3><p class="text-outline text-[13px]">${tr('det_live')}</p></div>
+          <div class="p-2.5 bg-primary-fixed rounded-xl"><span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1;">warehouse</span></div>
+        </div>
+        <div class="space-y-4">
+          <div class="flex justify-between items-end">
+            <div>
+              <span class="font-black text-on-surface" style="font-size:40px;" id="det-stock">${fmtInt(p.stock)}</span>
+              <span class="text-outline text-[13px] block mt-1">${tr('det_units')}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[12px] font-bold text-outline">${pct}% ${tr('det_capacity')}</span>
+            </div>
+          </div>
+          <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+            <div class="h-full ${pct<20?'bg-red-500':pct<40?'bg-amber-500':'bg-primary'} transition-all" style="width:${pct}%"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-surface-container-low p-3 rounded-xl">
+              <p class="text-[10px] uppercase font-bold text-outline mb-1">${tr('det_min')}</p>
+              <p class="font-bold text-[16px]">${fmtInt(p.minStock)}</p>
+            </div>
+            <div class="bg-surface-container-low p-3 rounded-xl">
+              <p class="text-[10px] uppercase font-bold text-outline mb-1">${tr('det_location')}</p>
+              <p class="font-bold text-[16px]">${p.location}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Model -->
+      <div class="glass-card p-5">
+        <div class="flex justify-between items-start mb-6">
+          <div><h3 class="font-bold text-[16px]">${tr('det_pricing')}</h3><p class="text-outline text-[13px]">${tr('det_profit_sub')}</p></div>
+          <div class="p-2.5 bg-tertiary-fixed rounded-xl"><span class="material-symbols-outlined text-on-tertiary-container" style="font-variation-settings:'FILL' 1;">payments</span></div>
+        </div>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <p class="text-on-surface-variant text-[13px] font-semibold">${tr('det_margin')}</p>
+            <div class="flex items-center gap-2">
+              <span class="font-black text-[22px]" id="det-margin">${mgn}</span>
+              <div class="w-8 h-8 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600">
+                <span class="material-symbols-outlined text-[16px]">check</span>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center text-[13px]">
+              <span class="text-outline">${tr('det_cost')}</span>
+              <span class="font-bold" id="det-cost">$${fmt(p.unitCost)}</span>
+            </div>
+            <div class="flex justify-between items-center text-[13px]">
+              <span class="text-outline">${tr('det_price')}</span>
+              <span class="font-bold text-primary" id="det-price">$${fmt(p.sellingPrice)}</span>
+            </div>
+            <div class="flex justify-between items-center text-[13px]">
+              <span class="text-outline">${tr('det_stock_val')}</span>
+              <span class="font-bold">$${fmt(p.stock*p.sellingPrice)}</span>
+            </div>
+          </div>
+          <button class="pricing-btn w-full py-3 bg-primary text-on-primary rounded-full text-[13px] font-bold shadow hover:scale-105 active:scale-95 transition-all" data-id="${p.id}">
+            ${tr('det_adjust')}
+          </button>
+        </div>
+      </div>
+
+      <!-- Demand Trends mini chart -->
+      <div class="glass-card p-5 flex flex-col">
+        <div class="mb-4"><h3 class="font-bold text-[16px]">${tr('det_demand')}</h3><p class="text-outline text-[13px]">${tr('det_weekly')}</p></div>
+        <div class="flex-1 min-h-[100px] flex items-end gap-1.5 mb-4">
+          ${[40,62,85,100,70,50,65].map((h,i)=>`<div class="flex-1 rounded-t-md ${i===3?'bg-primary':'bg-surface-container hover:bg-primary/30'} transition-all cursor-pointer" style="height:${h}%"></div>`).join('')}
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface-variant/50 hover:bg-surface-variant transition-colors group" onclick="showToast(tr('toast_export'))">
+            <span class="material-symbols-outlined text-primary group-hover:-translate-y-1 transition-transform">download</span>
+            <span class="text-[10px] font-bold uppercase">${tr('det_export')}</span>
+          </button>
+          <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface-variant/50 hover:bg-surface-variant transition-colors group" onclick="showPage('history')">
+            <span class="material-symbols-outlined text-primary group-hover:-translate-y-1 transition-transform">history</span>
+            <span class="text-[10px] font-bold uppercase">${tr('det_history_btn')}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Movement History -->
+    <div class="glass-card overflow-hidden">
+      <div class="px-5 py-4 border-b border-surface-container flex justify-between items-center">
+        <div><h3 class="font-bold text-[16px]">${tr('det_mv_history')}</h3><p class="text-outline text-[13px]">${tr('det_mv_sub')} ${p.name}</p></div>
+        <button class="text-primary text-[13px] font-bold flex items-center gap-1 hover:underline" onclick="showPage('history')">
+          ${tr('det_view_all')} <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="bg-surface-container/30">
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline">${tr('col_date')}</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline">${tr('col_action')}</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline">${tr('col_warehouse')}</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline">${tr('col_user')}</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline">${tr('col_change')}</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline text-right">${tr('col_balance')}</th>
+          </tr></thead>
+          <tbody class="divide-y divide-surface-container">${mvRows}</tbody>
+        </table>
+        ${p.movements.length===0?`<div class="text-center text-outline text-[13px] py-8">${tr('no_movements')}</div>`:''}`+
+      `</div>
+    </div>`;
+
+  // wire up pricing buttons in detail
+  document.querySelectorAll('.pricing-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>openPricingModal(parseInt(btn.dataset.id)));
+  });
+}
+
+function selectProduct(id){
+  selectedId=id;
+  renderDetail(id);
+  document.getElementById('inv-list-view').style.display='none';
+  document.getElementById('inv-detail-view').style.display='block';
+}
+
+function showInventoryList(){
+  document.getElementById('inv-list-view').style.display='block';
+  document.getElementById('inv-detail-view').style.display='none';
+  renderProductList(
+    document.getElementById('list-search').value,
+    document.getElementById('cat-filter').value,
+    document.getElementById('status-filter').value
+  );
+}
+
+// ═══════════════════════════════════════════
+//  DASHBOARD RENDER
+// ═══════════════════════════════════════════
+function renderDashboard(){
+  // KPIs
+  const total=products.reduce((s,p)=>s+p.stock*p.sellingPrice,0);
+  const active=products.filter(p=>p.stock>0).length;
+  const low=products.filter(p=>p.stock<p.minStock).length;
+  document.getElementById('dash-products').textContent=products.length;
+  // compact value: $428k style
+  const valShort=total>=1000000?'$'+Math.round(total/1000000)+'M':total>=1000?'$'+Math.round(total/1000)+'k':'$'+Math.round(total);
+  document.getElementById('dash-value').textContent=valShort;
+  document.getElementById('dash-active').textContent=active;
+  document.getElementById('dash-low').textContent=low;
+
+  // Date
+  const now=new Date();
+  const loc=lang==='es'?'es-MX':'en-US';
+  document.getElementById('dash-date').textContent=now.toLocaleDateString(loc,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Chart — simulated monthly inbound/outbound bars
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const inData= [3200,4100,3800,6400,5200,4700,5800,4200,6100,5500,4800,6200];
+  const outData=[2100,3200,2900,4800,3900,3500,4200,3100,4600,4100,3600,4700];
+  const maxBar=Math.max(...inData,...outData);
+  const chartEl=document.getElementById('dash-chart');
+  const monthsEl=document.getElementById('dash-months');
+  chartEl.innerHTML=inData.map((v,i)=>`
+    <div class="flex flex-col items-center gap-0.5 flex-1">
+      <div class="w-full flex items-end gap-0.5" style="height:140px">
+        <div class="flex-1 rounded-t-sm bg-on-surface transition-all" style="height:${Math.round((v/maxBar)*100)}%"></div>
+        <div class="flex-1 rounded-t-sm bg-gray-300 transition-all" style="height:${Math.round((outData[i]/maxBar)*100)}%"></div>
+      </div>
+      ${i===3?`<div class="text-[9px] font-bold text-white bg-on-surface rounded px-1 py-0.5 mt-1">${(v/1000).toFixed(1)}k</div>`:''}
+    </div>`).join('');
+  monthsEl.innerHTML=months.map((m,i)=>`<span class="${i===3?'font-bold text-on-surface':''}">${m}</span>`).join('');
+
+  // Critical Alerts
+  const alertProds=products.filter(p=>p.stock<p.minStock).sort((a,b)=>a.stock-b.stock);
+  document.getElementById('dash-alerts').innerHTML=alertProds.length===0
+    ? `<div class="flex items-center gap-3 text-outline py-2"><span class="material-symbols-outlined text-emerald-500">check_circle</span><p class="text-[13px]">${tr('all_stocked')}</p></div>`
+    : alertProds.map(p=>{
+        const st=stockStatus(p);
+        const isOut=p.stock===0;
+        return `<div class="flex items-start gap-3 p-3 rounded-xl ${isOut?'bg-red-50':'bg-amber-50'} cursor-pointer hover:opacity-80 transition-opacity" onclick="showPage('inventory');selectProduct(${p.id})">
+          <span class="material-symbols-outlined text-[18px] ${isOut?'text-red-500':'text-amber-500'} mt-0.5">${isOut?'error':'warning'}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-[12px] font-bold truncate ${isOut?'text-red-700':'text-amber-700'}">${st.label}: ${p.sku}</p>
+            <p class="text-[11px] text-outline truncate">${p.name} · ${fmtInt(p.stock)} ${tr('inv_units')} left</p>
+          </div>
+        </div>`;
+      }).join('');
+
+  // Last 5 Movements table
+  const allMv=[];
+  products.forEach(p=>p.movements.forEach(mv=>allMv.push({...mv,productName:p.name,productSku:p.sku,pid:p.id})));
+  allMv.sort((a,b)=>b.date.localeCompare(a.date));
+  const typeIcon={INBOUND:'arrow_downward',OUTBOUND:'arrow_upward',TRANSFER:'swap_horiz'};
+  const typeColor={INBOUND:'text-emerald-600',OUTBOUND:'text-red-500',TRANSFER:'text-amber-500'};
+  const typeLabel={INBOUND:tr('type_inbound'),OUTBOUND:tr('type_outbound'),TRANSFER:tr('type_transfer')};
+  document.getElementById('dash-movements-tbody').innerHTML=allMv.slice(0,5).map(mv=>`
+    <tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="showPage('inventory');selectProduct(${mv.pid})">
+      <td class="px-5 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[16px] ${typeColor[mv.type]}">${typeIcon[mv.type]}</span>
+          </div>
+          <div>
+            <p class="text-[13px] font-semibold">${mv.productName}</p>
+            <p class="text-[11px] text-outline">${mv.productSku}</p>
+          </div>
+        </div>
+      </td>
+      <td class="px-5 py-4">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${typeStyles(mv.type)}">
+          <span class="material-symbols-outlined text-[12px]">${typeIcon[mv.type]}</span>${typeLabel[mv.type]}
+        </span>
+      </td>
+      <td class="px-5 py-4 font-bold ${changeClass(mv.change)}">${changeLabel(mv.change)} ${tr('inv_units')}</td>
+      <td class="px-5 py-4 text-[13px] text-outline">${mv.date}</td>
+      <td class="px-5 py-4 text-right">
+        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-bold">${tr('mv_done')}</span>
+      </td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+//  HISTORY PAGE RENDER
+// ═══════════════════════════════════════════
+function renderHistory(filter=''){
+  const tbody=document.getElementById('history-tbody');
+  const allMovements=[];
+  products.forEach(p=>{
+    p.movements.forEach(mv=>allMovements.push({...mv,productName:p.name,productSku:p.sku}));
+  });
+  allMovements.sort((a,b)=>b.date.localeCompare(a.date));
+  const filtered=filter?allMovements.filter(mv=>mv.type===filter):allMovements;
+  tbody.innerHTML=filtered.map(mv=>`
+    <tr class="hover:bg-surface/50 transition-colors" data-search="${(mv.date+mv.type+mv.warehouse+mv.user+mv.productName).toLowerCase()}">
+      <td class="px-card-padding py-3.5 text-[13px]">${mv.date}</td>
+      <td class="px-card-padding py-3.5"><div class="text-[12px] font-semibold">${mv.productName}</div><div class="text-[11px] text-outline">${mv.productSku}</div></td>
+      <td class="px-card-padding py-3.5"><span class="px-2.5 py-1 rounded-full ${typeStyles(mv.type)} text-[11px] font-bold">${mv.type}</span></td>
+      <td class="px-card-padding py-3.5 text-[13px]">${mv.warehouse}</td>
+      <td class="px-card-padding py-3.5">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-${mv.color}-100 flex items-center justify-center text-[10px] font-bold">${mv.initials}</div>
+          <span class="text-[13px]">${mv.user}</span>
+        </div>
+      </td>
+      <td class="px-card-padding py-3.5 font-bold ${changeClass(mv.change)}">${changeLabel(mv.change)}</td>
+      <td class="px-card-padding py-3.5 font-bold text-right">${fmtInt(mv.balance)}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+//  SHIPMENTS DATA & RENDER
+// ═══════════════════════════════════════════
+const shipments = [
+  {id:'#SF-9021', recipient:'Alpha Motors',    initials:'AM', carrier:'DHL Express',  date:'24 Sep, 2023', status:'transit'},
+  {id:'#SF-8854', recipient:'Zenith Tech',     initials:'ZT', carrier:'FedEx',        date:'23 Sep, 2023', status:'delivered'},
+  {id:'#SF-7643', recipient:'Global Corp',     initials:'GC', carrier:'Maersk',       date:'25 Sep, 2023', status:'delayed'},
+  {id:'#SF-9112', recipient:'Sys-X Inc.',      initials:'SY', carrier:'UPS Supply',   date:'28 Sep, 2023', status:'processing'},
+  {id:'#SF-6830', recipient:'NovaTech SA',     initials:'NT', carrier:'DHL Express',  date:'30 Sep, 2023', status:'transit'},
+  {id:'#SF-5512', recipient:'Beta Industries', initials:'BI', carrier:'Schenker',     date:'01 Oct, 2023', status:'processing'},
+];
+let selectedShipmentId = '#SF-9021';
+
+function shipStatusBadge(status){
+  const map={
+    transit:    {label:tr('ship_st_transit'),    cls:'bg-blue-100 text-blue-700'},
+    delivered:  {label:tr('ship_st_delivered'),  cls:'bg-emerald-100 text-emerald-700'},
+    delayed:    {label:tr('ship_st_delayed'),    cls:'bg-orange-100 text-orange-700'},
+    processing: {label:tr('ship_st_processing'), cls:'bg-gray-200 text-gray-600'},
+  };
+  return map[status]||map.processing;
+}
+
+function renderShipments(){
+  const tbody=document.getElementById('ship-tbody');
+  if(!tbody) return;
+  tbody.innerHTML=shipments.map(s=>{
+    const b=shipStatusBadge(s.status);
+    const isSelected=s.id===selectedShipmentId;
+    return `<tr class="hover:bg-surface-container-low transition-colors cursor-pointer ${isSelected?'bg-surface-container-low':''}" onclick="selectShipment('${s.id}')">
+      <td class="px-5 py-4 font-bold text-[13px]">${s.id}</td>
+      <td class="px-5 py-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-surface-container rounded-full flex items-center justify-center text-[11px] font-bold text-on-surface">${s.initials}</div>
+          <span class="text-[14px]">${s.recipient}</span>
+        </div>
+      </td>
+      <td class="px-5 py-4 text-[13px] text-outline">${s.carrier}</td>
+      <td class="px-5 py-4 text-[13px] text-outline">${s.date}</td>
+      <td class="px-5 py-4 text-right">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold ${b.cls}">${b.label}</span>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ship-selected-label').textContent=tr('ship_col_id')+': '+selectedShipmentId;
+}
+
+function selectShipment(id){
+  selectedShipmentId=id;
+  renderShipments();
+  document.getElementById('ship-selected-label').textContent=tr('ship_col_id')+': '+id;
+}
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+const pages=['inventory','dashboard','shipments','analytics','history'];
+let currentPage='dashboard';
+
+function updateBreadcrumbs(name){
+  const bc={
+    inventory: [tr('bc_inventory'), tr('bc_products')],
+    dashboard: [tr('bc_home'),      tr('bc_dashboard')],
+    shipments: [tr('bc_logistics'), tr('nav_shipments')],
+    analytics: [tr('bc_reports'),   tr('nav_analytics')],
+    history:   [tr('bc_inventory'), tr('bc_mv_history')],
+  };
+  const pair=bc[name]||['',''];
+  document.getElementById('breadcrumb-parent').textContent=pair[0];
+  document.getElementById('breadcrumb-current').textContent=pair[1];
+}
+
+function showPage(name){
+  if(!pages.includes(name)) return;
+  currentPage=name;
+  pages.forEach(p=>{
+    const el=document.getElementById('page-'+p);
+    if(el) el.style.display=p===name?'block':'none';
+  });
+  document.querySelectorAll('.nav-link').forEach(a=>{
+    const active=a.dataset.page===name;
+    a.className=active
+      ?'nav-link flex items-center space-x-3 px-4 py-3 rounded-full bg-primary text-on-primary shadow-md transition-all'
+      :'nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all';
+  });
+  updateBreadcrumbs(name);
+  closeSidebar();
+  if(name==='dashboard') renderDashboard();
+  if(name==='inventory'){ document.getElementById('inv-list-view').style.display='block'; document.getElementById('inv-detail-view').style.display='none'; renderProductList(); }
+  if(name==='shipments') renderShipments();
+  if(name==='history') renderHistory(document.getElementById('history-filter').value);
+  document.querySelector('main').scrollTo({top:0,behavior:'smooth'});
+}
+
+document.querySelectorAll('.nav-link').forEach(a=>{
+  a.addEventListener('click',e=>{e.preventDefault();showPage(a.dataset.page);});
+});
+
+// ═══════════════════════════════════════════
+//  SIDEBAR MOBILE
+// ═══════════════════════════════════════════
+function openSidebar(){document.getElementById('sidebar').style.transform='translateX(0)';document.getElementById('sidebar-overlay').classList.remove('hidden');}
+function closeSidebar(){if(window.innerWidth>=1024)return;document.getElementById('sidebar').style.transform='';document.getElementById('sidebar-overlay').classList.add('hidden');}
+document.getElementById('hamburger-btn').addEventListener('click',openSidebar);
+document.getElementById('sidebar-overlay').addEventListener('click',closeSidebar);
+
+// ═══════════════════════════════════════════
+//  NOTIFICATIONS
+// ═══════════════════════════════════════════
+const bellBtn=document.getElementById('bell-btn');
+const notifPanel=document.getElementById('notif-panel');
+bellBtn.addEventListener('click',e=>{e.stopPropagation();notifPanel.classList.toggle('hidden');});
+document.addEventListener('click',()=>notifPanel.classList.add('hidden'));
+notifPanel.addEventListener('click',e=>e.stopPropagation());
+document.getElementById('mark-all-read').addEventListener('click',()=>{
+  document.getElementById('notif-dot').classList.add('hidden');
+  showToast(tr('toast_notif_read'));
+  notifPanel.classList.add('hidden');
+});
+
+// ═══════════════════════════════════════════
+//  SEARCH (header — filters product list)
+// ═══════════════════════════════════════════
+document.getElementById('search-input').addEventListener('input',function(){
+  document.getElementById('list-search').value=this.value;
+  showPage('inventory');
+  renderProductList(this.value,document.getElementById('cat-filter').value,document.getElementById('status-filter').value);
+});
+document.getElementById('list-search').addEventListener('input',function(){
+  renderProductList(this.value,document.getElementById('cat-filter').value,document.getElementById('status-filter').value);
+});
+document.getElementById('cat-filter').addEventListener('change',function(){
+  renderProductList(document.getElementById('list-search').value,this.value,document.getElementById('status-filter').value);
+});
+document.getElementById('status-filter').addEventListener('change',function(){
+  renderProductList(document.getElementById('list-search').value,document.getElementById('cat-filter').value,this.value);
+});
+document.getElementById('history-filter').addEventListener('change',function(){
+  renderHistory(this.value);
+});
+
+// ═══════════════════════════════════════════
+//  SCHEDULE SHIPMENT MODAL
+// ═══════════════════════════════════════════
+const scheduleModal = document.getElementById('schedule-modal');
+
+function openScheduleModal(){
+  // populate product dropdown
+  const sel = document.getElementById('sch-product');
+  sel.innerHTML = products.map(p =>
+    `<option value="${p.id}">${p.name} · ${p.sku}</option>`
+  ).join('');
+  updateSchStock();
+  // default date = 7 days from now
+  const d = new Date(); d.setDate(d.getDate()+7);
+  document.getElementById('sch-date').value = d.toISOString().slice(0,10);
+  // clear fields
+  ['sch-qty','sch-street','sch-city','sch-postal','sch-country','sch-cust-name','sch-cust-phone','sch-cust-postal','sch-note'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  scheduleModal.classList.add('active');
+}
+function closeScheduleModal(){ scheduleModal.classList.remove('active'); }
+
+function updateSchStock(){
+  const pid = parseInt(document.getElementById('sch-product').value);
+  const p = products.find(x=>x.id===pid);
+  const badge = document.getElementById('sch-stock-badge');
+  if(p){
+    const st = stockStatus(p);
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full ${st.dot} inline-block flex-shrink-0"></span>${p.stock.toLocaleString()} ${tr('inv_units')}`;
+  } else {
+    badge.textContent = '—';
+  }
+}
+
+document.getElementById('sch-product').addEventListener('change', updateSchStock);
+
+document.getElementById('schedule-modal-close').addEventListener('click', closeScheduleModal);
+document.getElementById('schedule-modal-cancel').addEventListener('click', closeScheduleModal);
+scheduleModal.addEventListener('click', closeScheduleModal);
+
+document.getElementById('schedule-modal-save').addEventListener('click', ()=>{
+  const pid    = parseInt(document.getElementById('sch-product').value);
+  const qty    = parseInt(document.getElementById('sch-qty').value)||0;
+  const street = document.getElementById('sch-street').value.trim();
+  const custName = document.getElementById('sch-cust-name').value.trim();
+  const custPhone = document.getElementById('sch-cust-phone').value.trim();
+
+  if(!street)    { showToast(tr('toast_ship_address'),'error'); return; }
+  if(!custName)  { showToast(tr('toast_ship_cust'),'error'); return; }
+  if(!custPhone) { showToast(tr('toast_ship_phone'),'error'); return; }
+  if(qty<1)      { showToast(tr('toast_no_qty'),'error'); return; }
+
+  const p = products.find(x=>x.id===pid);
+  if(p && qty>p.stock){ showToast(tr('toast_no_stock'),'error'); return; }
+
+  // Build new shipment entry
+  const wh   = document.getElementById('sch-warehouse').value;
+  const city = document.getElementById('sch-city').value.trim()||'—';
+  const postal = document.getElementById('sch-postal').value.trim()||'—';
+  const carrier= document.getElementById('sch-carrier').value;
+  const dateVal= document.getElementById('sch-date').value;
+  const note  = document.getElementById('sch-note').value.trim();
+  const custPostal = document.getElementById('sch-cust-postal').value.trim()||'—';
+
+  const dateLabel = dateVal
+    ? new Date(dateVal).toLocaleDateString(lang==='es'?'es-MX':'en-US',{day:'2-digit',month:'short',year:'numeric'})
+    : '—';
+
+  const newId = '#SF-' + (Math.floor(Math.random()*9000)+1000);
+  const initials = custName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+  shipments.unshift({
+    id: newId,
+    recipient: custName,
+    initials,
+    carrier,
+    date: dateLabel,
+    status: 'processing',
+    address: `${street}, ${city} ${postal}`,
+    phone: custPhone,
+    postalCustomer: custPostal,
+    warehouse: wh,
+    product: p?p.name:'—',
+    qty,
+    note
+  });
+
+  // Deduct stock
+  if(p){
+    p.stock = Math.max(0, p.stock-qty);
+    p.movements.unshift({
+      date: new Date().toLocaleDateString(lang==='es'?'es-MX':'en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+      type:'OUTBOUND', warehouse: wh,
+      user: custName, initials, color:'blue',
+      change: -qty, balance: p.stock
+    });
+  }
+
+  closeScheduleModal();
+  renderShipments();
+  showToast(tr('ship_scheduled')+': '+newId);
+});
+
+// ═══════════════════════════════════════════
+//  ADD PRODUCT MODAL
+// ═══════════════════════════════════════════
+const addProductModal=document.getElementById('add-product-modal');
+let addProductImageDataUrl=null;
+
+function openAddProductModal(){
+  addProductImageDataUrl=null;
+  ['ap-name','ap-sku','ap-barcode','ap-manufacturer','ap-desc','ap-location'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  ['ap-stock','ap-minstock','ap-maxstock','ap-cost','ap-price'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('img-preview').classList.add('hidden');
+  document.getElementById('img-placeholder').classList.remove('hidden');
+  document.getElementById('img-remove-btn').classList.add('hidden');
+  addProductModal.classList.add('active');
+}
+function closeAddProductModal(){ addProductModal.classList.remove('active'); }
+
+function removeProductImage(){
+  addProductImageDataUrl=null;
+  document.getElementById('img-preview').classList.add('hidden');
+  document.getElementById('img-placeholder').classList.remove('hidden');
+  document.getElementById('img-remove-btn').classList.add('hidden');
+  document.getElementById('img-file-input').value='';
+}
+
+document.getElementById('img-file-input').addEventListener('change',function(){
+  const file=this.files[0];
+  if(!file) return;
+  if(file.size>5*1024*1024){ showToast('Image too large (max 5 MB)','error'); return; }
+  const reader=new FileReader();
+  reader.onload=e=>{
+    addProductImageDataUrl=e.target.result;
+    const preview=document.getElementById('img-preview');
+    preview.src=addProductImageDataUrl;
+    preview.classList.remove('hidden');
+    document.getElementById('img-placeholder').classList.add('hidden');
+    document.getElementById('img-remove-btn').classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+});
+
+// drag-and-drop
+const dropZone=document.getElementById('img-drop-zone');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('border-primary','bg-primary-fixed/20');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('border-primary','bg-primary-fixed/20'));
+dropZone.addEventListener('drop',e=>{
+  e.preventDefault();
+  dropZone.classList.remove('border-primary','bg-primary-fixed/20');
+  const file=e.dataTransfer.files[0];
+  if(!file||!file.type.startsWith('image/')) return;
+  document.getElementById('img-file-input').files=e.dataTransfer.files;
+  document.getElementById('img-file-input').dispatchEvent(new Event('change'));
+});
+
+document.getElementById('add-product-modal-close').addEventListener('click',closeAddProductModal);
+document.getElementById('add-product-cancel').addEventListener('click',closeAddProductModal);
+addProductModal.addEventListener('click',closeAddProductModal);
+
+document.getElementById('add-product-save').addEventListener('click',()=>{
+  const name=document.getElementById('ap-name').value.trim();
+  const sku=document.getElementById('ap-sku').value.trim();
+  const stock=parseInt(document.getElementById('ap-stock').value)||0;
+  const minStock=parseInt(document.getElementById('ap-minstock').value)||0;
+  const maxStock=parseInt(document.getElementById('ap-maxstock').value)||Math.max(stock*2,10);
+  const warehouse=document.getElementById('ap-warehouse').value;
+  const location=document.getElementById('ap-location').value.trim()||'—';
+  const cost=parseFloat(document.getElementById('ap-cost').value)||0;
+  const price=parseFloat(document.getElementById('ap-price').value)||0;
+  const desc=document.getElementById('ap-desc').value.trim();
+  const category=document.getElementById('ap-category').value;
+  const manufacturer=document.getElementById('ap-manufacturer').value.trim()||'—';
+  const barcode=document.getElementById('ap-barcode').value.trim()||'—';
+
+  if(!name||!sku){ showToast(tr('toast_prod_required'),'error'); return; }
+
+  const icons={
+    'Heavy Machinery':'settings',
+    'Electronics':'memory',
+    'Tools & Parts':'hardware',
+    'Raw Materials':'category'
+  };
+  const iconBgs={'Heavy Machinery':'#e0e3e5','Electronics':'#dae2fd','Tools & Parts':'#e5eeff','Raw Materials':'#fcdeb5'};
+  const iconColors={'Heavy Machinery':'#45464d','Electronics':'#131b2e','Tools & Parts':'#45464d','Raw Materials':'#574425'};
+
+  const newProduct={
+    id: products.length+1,
+    name, sku, barcode, category, manufacturer,
+    stock, maxStock, minStock,
+    location: warehouse+' / '+location,
+    unitCost: cost, sellingPrice: price,
+    icon: icons[category]||'inventory_2',
+    iconBg: iconBgs[category]||'#e5eeff',
+    iconColor: iconColors[category]||'#45464d',
+    description: desc||name,
+    tags:[],
+    image: addProductImageDataUrl||null,
+    movements:[]
+  };
+
+  products.push(newProduct);
+  closeAddProductModal();
+  renderProductList();
+  showToast(tr('toast_prod_added'));
+});
+
+// ═══════════════════════════════════════════
+//  PRICING MODAL
+// ═══════════════════════════════════════════
+const pricingModal=document.getElementById('pricing-modal');
+let pricingTargetId=null;
+
+function openPricingModal(id){
+  pricingTargetId=id;
+  const p=getProduct(id);
+  document.getElementById('input-cost').value=p.unitCost;
+  document.getElementById('input-price').value=p.sellingPrice;
+  updateMarginPreview();
+  pricingModal.classList.add('active');
+}
+function closePricingModal(){pricingModal.classList.remove('active');}
+function updateMarginPreview(){
+  const c=parseFloat(document.getElementById('input-cost').value)||0;
+  const pp=parseFloat(document.getElementById('input-price').value)||0;
+  document.getElementById('modal-margin-preview').textContent=margin(c,pp);
+}
+document.getElementById('pricing-btn') && document.getElementById('pricing-btn').addEventListener('click',()=>openPricingModal(selectedId));
+document.getElementById('pricing-modal-close').addEventListener('click',closePricingModal);
+document.getElementById('pricing-modal-cancel').addEventListener('click',closePricingModal);
+pricingModal.addEventListener('click',closePricingModal);
+document.getElementById('input-cost').addEventListener('input',updateMarginPreview);
+document.getElementById('input-price').addEventListener('input',updateMarginPreview);
+document.getElementById('pricing-modal-save').addEventListener('click',()=>{
+  const c=parseFloat(document.getElementById('input-cost').value);
+  const pp=parseFloat(document.getElementById('input-price').value);
+  if(isNaN(c)||isNaN(pp)||c<=0||pp<=0){showToast(tr('toast_bad_price'),'error');return;}
+  if(pp<=c){showToast(tr('toast_price_cost'),'error');return;}
+  const p=getProduct(pricingTargetId);
+  p.unitCost=c; p.sellingPrice=pp;
+  renderDetail(selectedId);
+  renderProductList(document.getElementById('list-search').value,document.getElementById('cat-filter').value);
+  closePricingModal();
+  showToast(tr('toast_pricing_ok')+' '+p.name);
+});
+
+// ═══════════════════════════════════════════
+//  MOVEMENT MODAL (FAB)
+// ═══════════════════════════════════════════
+const movementModal=document.getElementById('movement-modal');
+
+function openMovementModal(preselectedId){
+  const sel=document.getElementById('mv-product');
+  sel.innerHTML=products.map(p=>`<option value="${p.id}" ${p.id===(preselectedId||selectedId)?'selected':''}>${p.name} (${p.sku})</option>`).join('');
+  document.getElementById('mv-type').value='INBOUND';
+  document.getElementById('mv-warehouse').value='';
+  document.getElementById('mv-user').value='';
+  document.getElementById('mv-qty').value='';
+  movementModal.classList.add('active');
+}
+function closeMovementModal(){movementModal.classList.remove('active');}
+
+document.getElementById('fab-btn').addEventListener('click',()=>openMovementModal());
+document.getElementById('movement-modal-close').addEventListener('click',closeMovementModal);
+document.getElementById('movement-modal-cancel').addEventListener('click',closeMovementModal);
+movementModal.addEventListener('click',closeMovementModal);
+
+document.getElementById('movement-modal-save').addEventListener('click',()=>{
+  const pid=parseInt(document.getElementById('mv-product').value);
+  const type=document.getElementById('mv-type').value;
+  const warehouse=document.getElementById('mv-warehouse').value.trim();
+  const user=document.getElementById('mv-user').value.trim();
+  const qty=parseInt(document.getElementById('mv-qty').value);
+  if(!warehouse){showToast(tr('toast_no_wh'),'error');return;}
+  if(!user){showToast(tr('toast_no_user'),'error');return;}
+  if(!qty||qty<1){showToast(tr('toast_no_qty'),'error');return;}
+  const p=getProduct(pid);
+  const delta=type==='OUTBOUND'||type==='TRANSFER'?-qty:+qty;
+  const newBal=p.stock+delta;
+  if(newBal<0){showToast(tr('toast_no_stock'),'error');return;}
+  p.stock=newBal;
+  const initials=user.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const colors=['blue','purple','green','rose','amber','teal'];
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{month:'short',day:'numeric'})+', '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  p.movements.unshift({date:dateStr,type,warehouse,user,initials,color,change:delta,balance:newBal});
+  if(pid===selectedId) renderDetail(selectedId);
+  renderProductList(document.getElementById('list-search').value,document.getElementById('cat-filter').value);
+  closeMovementModal();
+  showToast(`${type} registered · ${qty} units of ${p.name}`);
+});
+
+// Mobile back button
+document.getElementById('back-to-list').addEventListener('click',()=>{
+  document.getElementById('product-list-panel').style.display='';
+  document.getElementById('product-detail-panel').style.display='none';
+});
+
+// Responsive: on resize show both panels on desktop
+window.addEventListener('resize',()=>{
+  if(window.innerWidth>=768){
+    document.getElementById('product-list-panel').style.display='';
+    document.getElementById('product-detail-panel').style.display='flex';
+  }
+});
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+applyTranslations();
+showPage('dashboard');
+</script>
+</body>
+</html>

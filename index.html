@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StockFlow Pro - Inventory Manager</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: {
+        colors: {
+          'outline-variant': '#c6c6cd', 'tertiary-fixed': '#fcdeb5', 'on-primary-container': '#7c839b',
+          'tertiary': '#000000', 'on-error-container': '#93000a', 'surface-container': '#e5eeff',
+          'primary-container': '#131b2e', 'on-background': '#0b1c30', 'on-error': '#ffffff',
+          'on-secondary': '#ffffff', 'secondary-container': '#e0e3e5', 'surface': '#f8f9ff',
+          'primary-fixed': '#dae2fd', 'background': '#f8f9ff', 'outline': '#76777d',
+          'on-primary': '#ffffff', 'on-surface': '#0b1c30', 'on-primary-fixed': '#131b2e',
+          'on-secondary-container': '#626567', 'on-tertiary': '#ffffff', 'on-tertiary-container': '#98805d',
+          'surface-dim': '#cbdbf5', 'surface-container-lowest': '#ffffff', 'on-surface-variant': '#45464d',
+          'error': '#ba1a1a', 'surface-variant': '#d3e4fe', 'tertiary-container': '#271901',
+          'inverse-surface': '#213145', 'surface-bright': '#f8f9ff', 'error-container': '#ffdad6',
+          'primary': '#000000', 'surface-container-high': '#dce9ff', 'inverse-on-surface': '#eaf1ff',
+          'primary-fixed-dim': '#bec6e0', 'surface-container-low': '#eff4ff', 'secondary-fixed': '#e0e3e5',
+          'inverse-primary': '#bec6e0', 'secondary': '#5c5f61', 'surface-container-highest': '#d3e4fe'
+        },
+        borderRadius: { 'DEFAULT': '1rem', 'lg': '2rem', 'xl': '3rem', 'full': '9999px' },
+        spacing: { 'section-gap': '40px', 'base': '8px', 'gutter': '24px', 'card-padding': '24px', 'container-margin': '32px' },
+        fontFamily: {
+          'headline-lg-mobile': ['Plus Jakarta Sans'], 'body-md': ['Inter'], 'label-sm': ['Inter'],
+          'headline-md': ['Plus Jakarta Sans'], 'label-md': ['Inter'], 'headline-lg': ['Plus Jakarta Sans'],
+          'body-lg': ['Inter'], 'display-lg': ['Plus Jakarta Sans']
+        },
+        fontSize: {
+          'headline-lg-mobile': ['24px', { lineHeight: '32px', fontWeight: '700' }],
+          'body-md':            ['16px', { lineHeight: '24px', fontWeight: '400' }],
+          'label-sm':           ['12px', { lineHeight: '16px', fontWeight: '500' }],
+          'headline-md':        ['24px', { lineHeight: '32px', fontWeight: '600' }],
+          'label-md':           ['14px', { lineHeight: '20px', letterSpacing: '0.05em', fontWeight: '600' }],
+          'headline-lg':        ['32px', { lineHeight: '40px', letterSpacing: '-0.01em', fontWeight: '700' }],
+          'body-lg':            ['18px', { lineHeight: '28px', fontWeight: '400' }],
+          'display-lg':         ['48px', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '700' }]
+        }
+      }}
+    };
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body class="overflow-hidden h-screen flex">
+
+<!-- Sidebar overlay (mobile) -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/30 z-40 hidden"></div>
+
+<!-- ── Sidebar ── -->
+<aside id="sidebar" class="flex flex-col p-6 h-screen w-[280px] bg-white/70 backdrop-blur-3xl border-r border-white/20 fixed left-0 top-0 z-50 rounded-r-lg shadow-[20px_0_40px_rgba(0,0,0,0.04)] -translate-x-full lg:translate-x-0">
+  <div class="flex items-center space-x-3 mb-10 px-2">
+    <div class="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
+      <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1;">inventory_2</span>
+    </div>
+    <div>
+      <h1 class="font-black tracking-tight text-black" style="font-family:'Plus Jakarta Sans';font-size:20px;">StockFlow</h1>
+      <p class="text-[10px] uppercase tracking-widest text-outline font-bold">Global Warehouse</p>
+    </div>
+  </div>
+  <nav class="flex-1 space-y-2">
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#" data-page="dashboard">
+      <span class="material-symbols-outlined">dashboard</span>
+      <span class="font-label-md text-label-md" data-i18n="nav_dashboard">Dashboard</span>
+    </a>
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full bg-primary text-on-primary shadow-md transition-all" href="#" data-page="inventory">
+      <span class="material-symbols-outlined">inventory_2</span>
+      <span class="font-label-md text-label-md" data-i18n="nav_inventory">Inventory</span>
+    </a>
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#" data-page="shipments">
+      <span class="material-symbols-outlined">local_shipping</span>
+      <span class="font-label-md text-label-md" data-i18n="nav_shipments">Shipments</span>
+    </a>
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#" data-page="analytics">
+      <span class="material-symbols-outlined">monitoring</span>
+      <span class="font-label-md text-label-md" data-i18n="nav_analytics">Analytics</span>
+    </a>
+    <a class="nav-link flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#" data-page="history">
+      <span class="material-symbols-outlined">history</span>
+      <span class="font-label-md text-label-md" data-i18n="nav_history">History</span>
+    </a>
+  </nav>
+  <div class="pt-6 border-t border-white/20 space-y-2">
+    <a class="flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#">
+      <span class="material-symbols-outlined">help</span>
+      <span class="font-label-md text-label-md" data-i18n="nav_support">Support</span>
+    </a>
+    <a class="flex items-center space-x-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-variant/50 transition-all" href="#">
+      <span class="material-symbols-outlined">person</span>
+      <span class="font-label-md text-label-md" data-i18n="nav_account">Account</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<main class="flex-1 lg:ml-[280px] h-screen overflow-y-auto custom-scrollbar relative">
+
+  <!-- Top App Bar -->
+  <header class="flex justify-between items-center px-gutter py-4 w-full sticky top-0 z-40 bg-surface/60 backdrop-blur-xl border-b border-white/10 shadow-sm">
+    <div class="flex items-center space-x-4">
+      <button id="hamburger-btn" class="lg:hidden p-2 rounded-full hover:bg-surface-variant">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="flex items-center space-x-2">
+        <span class="font-label-md text-label-md text-outline" id="breadcrumb-parent">Home</span>
+        <span class="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
+        <span class="font-label-md text-label-md text-primary font-bold" id="breadcrumb-current">Dashboard</span>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4">
+      <div class="hidden md:flex bg-white/50 rounded-full px-4 py-2 border border-white/20 items-center space-x-2">
+        <span class="material-symbols-outlined text-outline text-[20px]">search</span>
+        <input id="search-input" class="bg-transparent border-none focus:ring-0 text-sm w-48 font-body-md" placeholder="Search products..." type="text"/>
+      </div>
+      <button id="lang-btn" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-surface-container text-[12px] font-black hover:bg-surface-container transition-colors tracking-widest">
+        <span class="material-symbols-outlined text-[14px]">translate</span>
+        <span id="lang-label">ES</span>
+      </button>
+      <div class="relative">
+        <button id="bell-btn" class="p-2 rounded-full hover:bg-surface-variant transition-colors relative">
+          <span class="material-symbols-outlined">notifications</span>
+          <span id="notif-dot" class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+        </button>
+        <div id="notif-panel" class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-surface-container-high overflow-hidden hidden" style="z-index:200;">
+          <div class="px-5 py-4 border-b border-surface-container flex justify-between items-center">
+            <span class="font-label-md text-label-md" data-i18n="notif_title">Notifications</span>
+            <button id="mark-all-read" class="text-[11px] text-primary font-bold hover:underline" data-i18n="notif_mark_read">Mark all read</button>
+          </div>
+          <div class="divide-y divide-surface-container max-h-72 overflow-y-auto custom-scrollbar">
+            <div class="px-5 py-4 hover:bg-surface-container-low flex gap-3 items-start cursor-pointer">
+              <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="material-symbols-outlined text-emerald-600 text-[16px]">arrow_downward</span>
+              </div>
+              <div>
+                <p class="text-[13px] font-semibold" data-i18n="notif1_title">Inbound received · WH-04</p>
+                <p class="text-[12px] text-outline mt-0.5" data-i18n="notif1_body">+120 units of X-100</p>
+                <p class="text-[11px] text-outline/70 mt-1" data-i18n="notif_2h">2 hours ago</p>
+              </div>
+              <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
+            </div>
+            <div class="px-5 py-4 hover:bg-surface-container-low flex gap-3 items-start cursor-pointer">
+              <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="material-symbols-outlined text-amber-600 text-[16px]">warning</span>
+              </div>
+              <div>
+                <p class="text-[13px] font-semibold" data-i18n="notif2_title">Low stock · Sensor ST-200</p>
+                <p class="text-[12px] text-outline mt-0.5" data-i18n="notif2_body">Only 85 units remaining</p>
+                <p class="text-[11px] text-outline/70 mt-1" data-i18n="notif_5h">5 hours ago</p>
+              </div>
+              <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
+            </div>
+            <div class="px-5 py-4 hover:bg-surface-container-low flex gap-3 items-start cursor-pointer">
+              <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="material-symbols-outlined text-red-600 text-[16px]">error</span>
+              </div>
+              <div>
+                <p class="text-[13px] font-semibold" data-i18n="notif3_title">Out of stock · Motor ME-75</p>
+                <p class="text-[12px] text-outline mt-0.5" data-i18n="notif3_body">0 units available</p>
+                <p class="text-[11px] text-outline/70 mt-1" data-i18n="notif_yest">Yesterday</p>
+              </div>
+              <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-primary-fixed border-2 border-white shadow-sm cursor-pointer flex items-center justify-center hover:bg-surface-container-high transition-colors">
+        <span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings:'FILL' 1;">manage_accounts</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: INVENTORY
+  ═══════════════════════════════════════ -->
+  <div id="page-inventory" style="display:none;" class="p-6 max-w-7xl mx-auto">
+
+    <!-- LIST VIEW -->
+    <div id="inv-list-view">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="font-black text-[28px] text-on-surface" style="font-family:'Plus Jakarta Sans';" data-i18n="inv_list_title">Inventory List</h2>
+          <p class="text-outline text-[14px] mt-1" data-i18n="inv_list_sub">Manage your products and global stock levels.</p>
+        </div>
+        <div class="flex gap-3">
+          <button id="btn-export-csv" class="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-full text-[13px] font-semibold hover:bg-surface-container transition-colors">
+            <span class="material-symbols-outlined text-[18px]">download</span>
+            <span data-i18n="btn_export_csv">Export CSV</span>
+          </button>
+          <button id="btn-add-product" class="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-full text-[13px] font-bold shadow hover:scale-105 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            <span data-i18n="btn_add_item">Add New Item</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 p-4 flex flex-wrap items-center gap-3">
+        <div class="relative">
+          <select id="cat-filter" class="pl-3 pr-8 py-2 border border-gray-200 rounded-full text-[13px] font-medium bg-white appearance-none cursor-pointer focus:outline-none">
+            <option value="" data-i18n="inv_all_cats">All categories</option>
+            <option value="Heavy Machinery" data-i18n="inv_heavy">Heavy Machinery</option>
+            <option value="Electronics" data-i18n="inv_electronics">Electronics</option>
+            <option value="Tools &amp; Parts" data-i18n="inv_tools">Tools &amp; Parts</option>
+            <option value="Raw Materials" data-i18n="inv_raw">Raw Materials</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+        </div>
+        <div class="relative">
+          <select id="status-filter" class="pl-3 pr-8 py-2 border border-gray-200 rounded-full text-[13px] font-medium bg-white appearance-none cursor-pointer focus:outline-none">
+            <option value="" data-i18n="inv_all_status">All Status</option>
+            <option value="active" data-i18n="st_active">ACTIVE</option>
+            <option value="low" data-i18n="st_low">LOW STOCK</option>
+            <option value="critical" data-i18n="st_critical">CRITICAL</option>
+            <option value="out" data-i18n="st_out">OUT OF STOCK</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+        </div>
+        <button class="p-2 rounded-full border border-gray-200 hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-outline text-[18px]">tune</span>
+        </button>
+        <div class="ml-auto flex items-center gap-4">
+          <div class="flex items-center gap-2 bg-surface-container-low rounded-full px-3 py-2">
+            <span class="material-symbols-outlined text-outline text-[18px]">search</span>
+            <input id="list-search" class="bg-transparent border-none focus:ring-0 text-sm outline-none w-40" placeholder="Search product..."/>
+          </div>
+          <div class="text-right border-l border-gray-100 pl-4">
+            <p class="text-[10px] uppercase font-bold text-outline tracking-wider">TOTAL SKU</p>
+            <p class="font-black text-[22px] leading-none" id="product-count">—</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead><tr class="border-b border-gray-100">
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_sku">SKU</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_product">Product Name</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_category">Category</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_stock">Current Stock</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_price">Unit Price</th>
+              <th class="px-5 py-4 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_status">Status</th>
+              <th class="px-5 py-4"></th>
+            </tr></thead>
+            <tbody id="product-list" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETAIL VIEW -->
+    <div id="inv-detail-view" style="display:none;">
+      <div class="mb-5">
+        <button id="btn-back-to-list" class="flex items-center gap-2 text-primary font-bold text-[14px] hover:underline">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span data-i18n="back_list">Back to list</span>
+        </button>
+      </div>
+      <div id="detail-panel" class="space-y-6 max-w-5xl"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: DASHBOARD
+  ═══════════════════════════════════════ -->
+  <div id="page-dashboard" style="display:none;" class="p-6 max-w-7xl mx-auto space-y-6">
+
+    <p class="text-[12px] font-bold uppercase tracking-widest text-outline" id="dash-date"></p>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2 bg-gray-100 rounded-xl"><span class="material-symbols-outlined text-gray-600" style="font-variation-settings:'FILL' 1;">inventory_2</span></div>
+          <span class="text-[11px] text-outline">Total</span>
+        </div>
+        <p class="font-black text-[34px] leading-none text-on-surface mt-1" id="dash-products">—</p>
+        <p class="text-[12px] font-semibold text-outline mt-2" data-i18n="kpi_products">Total Products</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2 bg-amber-100 rounded-xl"><span class="material-symbols-outlined text-amber-600" style="font-variation-settings:'FILL' 1;">payments</span></div>
+          <span class="text-[11px] text-outline">MXN</span>
+        </div>
+        <p class="font-black text-[30px] leading-none text-on-surface mt-1" id="dash-value">—</p>
+        <p class="text-[12px] font-semibold text-outline mt-2" data-i18n="kpi_value">Total Stock Value</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-red-100">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2 bg-red-100 rounded-xl"><span class="material-symbols-outlined text-red-500" style="font-variation-settings:'FILL' 1;">warning</span></div>
+          <span class="text-[11px] font-bold text-red-500" data-i18n="badge_urgent">Critical</span>
+        </div>
+        <p class="font-black text-[34px] leading-none text-red-600 mt-1" id="dash-low">—</p>
+        <p class="text-[12px] font-semibold text-outline mt-2" data-i18n="kpi_low">Low Stock Alerts</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex justify-between items-start mb-3">
+          <div class="p-2 bg-gray-100 rounded-xl"><span class="material-symbols-outlined text-gray-600" style="font-variation-settings:'FILL' 1;">pending_actions</span></div>
+          <span class="text-[11px] text-outline" data-i18n="kpi_queue">Queue</span>
+        </div>
+        <p class="font-black text-[34px] leading-none text-on-surface mt-1" id="dash-active">—</p>
+        <p class="text-[12px] font-semibold text-outline mt-2" data-i18n="kpi_active">Products in Stock</p>
+      </div>
+    </div>
+
+    <!-- Chart + Alerts + Quick Actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <div class="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-start justify-between mb-1">
+          <h3 class="font-bold text-[18px]" data-i18n="section_movements">Stock Movements</h3>
+          <div class="flex items-center gap-4 text-[12px] text-outline">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-on-surface inline-block"></span> <span data-i18n="legend_entry">Entries</span></span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block"></span> <span data-i18n="legend_exit">Exits</span></span>
+          </div>
+        </div>
+        <p class="text-[12px] text-outline mb-5" data-i18n="sub_movements">Entries vs Exits (Last 12 Months)</p>
+        <div class="relative h-44">
+          <div class="flex items-end justify-between gap-1 h-full pb-6" id="dash-chart"></div>
+          <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[10px] text-outline" id="dash-months"></div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 space-y-4">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-[16px]" data-i18n="section_alerts">Critical Alerts</h3>
+            <span class="material-symbols-outlined text-amber-500 text-[20px]">diamond</span>
+          </div>
+          <div id="dash-alerts" class="space-y-3 max-h-44 overflow-y-auto custom-scrollbar"></div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div class="grid grid-cols-2 gap-2">
+            <button id="qa-scan-btn" class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-on-surface text-[26px]">qr_code_scanner</span>
+              <span class="text-[11px] font-semibold text-on-surface" data-i18n="qa_scan">Scan Item</span>
+            </button>
+            <button id="qa-dispatch-btn" class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-on-surface text-[26px]">local_shipping</span>
+              <span class="text-[11px] font-semibold text-on-surface" data-i18n="qa_dispatch">Dispatch</span>
+            </button>
+            <button id="qa-audit-btn" class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-on-surface text-[26px]">fact_check</span>
+              <span class="text-[11px] font-semibold text-on-surface" data-i18n="qa_audit">Audit</span>
+            </button>
+            <button id="qa-suppliers-btn" class="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-on-surface text-[26px]">groups</span>
+              <span class="text-[11px] font-semibold text-on-surface" data-i18n="qa_suppliers">Suppliers</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Last 5 Movements -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+        <div>
+          <h3 class="font-bold text-[18px]" data-i18n="section_last_mv">Last 5 Movements</h3>
+          <p class="text-[12px] text-outline" data-i18n="sub_last_mv">Real-time inventory ledger</p>
+        </div>
+        <button id="dash-view-all-btn" class="px-4 py-2 border border-gray-200 rounded-full text-[13px] font-semibold hover:bg-surface-container transition-colors" data-i18n="btn_view_all">View all →</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="bg-surface-container-low border-b border-gray-100">
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_product">Product</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_action">Type</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_change">Qty</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="col_date">Date</th>
+            <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider text-right" data-i18n="col_status">Status</th>
+          </tr></thead>
+          <tbody id="dash-movements-tbody" class="divide-y divide-gray-50"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: HISTORY
+  ═══════════════════════════════════════ -->
+  <div id="page-history" style="display:none;" class="p-8 max-w-7xl mx-auto space-y-section-gap">
+    <div class="flex justify-between items-center">
+      <div>
+        <h2 class="font-headline-lg text-headline-lg" data-i18n="hist_title">Movement History</h2>
+        <p class="text-outline text-body-md mt-1" data-i18n="hist_sub">Complete audit log</p>
+      </div>
+      <div class="relative">
+        <select id="history-filter" class="sf-select" style="width:auto;padding:.5rem 2.5rem .5rem 1rem;">
+          <option value="">All types</option>
+          <option value="INBOUND">Inbound</option>
+          <option value="OUTBOUND">Outbound</option>
+          <option value="TRANSFER">Transfer</option>
+        </select>
+        <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+      </div>
+    </div>
+    <div class="glass-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="bg-surface-container/30">
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Date &amp; Time</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Product</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Action</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Warehouse</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">User</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline">Change</th>
+            <th class="px-card-padding py-4 text-[10px] uppercase font-bold text-outline text-right">Balance</th>
+          </tr></thead>
+          <tbody id="history-tbody" class="divide-y divide-surface-container"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: SHIPMENTS
+  ═══════════════════════════════════════ -->
+  <div id="page-shipments" style="display:none;" class="p-6 max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div>
+        <h2 class="font-black text-[28px] text-on-surface" style="font-family:'Plus Jakarta Sans';" data-i18n="ship_title">Shipment Management</h2>
+        <p class="text-outline text-[14px] mt-1" data-i18n="ship_sub">Monitor and coordinate global logistics in real time.</p>
+      </div>
+      <button id="btn-schedule-ship" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-full text-[13px] font-bold shadow hover:scale-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[18px]">schedule_send</span>
+        <span data-i18n="btn_schedule">Schedule Shipment</span>
+      </button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <div class="p-2.5 bg-gray-100 rounded-xl"><span class="material-symbols-outlined text-on-surface" style="font-variation-settings:'FILL' 1;">local_shipping</span></div>
+          <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[11px] font-bold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px]">trending_up</span>+12%
+          </span>
+        </div>
+        <div class="mt-8">
+          <p class="text-[12px] font-bold uppercase tracking-wider text-outline" data-i18n="ship_kpi_transit">In Transit</p>
+          <p class="font-black text-[40px] leading-none text-on-surface mt-1">1,284</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <div class="p-2.5 bg-emerald-100 rounded-xl"><span class="material-symbols-outlined text-emerald-600" style="font-variation-settings:'FILL' 1;">check_circle</span></div>
+        </div>
+        <div class="mt-8">
+          <p class="text-[12px] font-bold uppercase tracking-wider text-outline" data-i18n="ship_kpi_delivered">Delivered Today</p>
+          <div class="flex items-baseline gap-2 mt-1">
+            <p class="font-black text-[40px] leading-none text-on-surface">452</p>
+            <span class="text-[13px] text-outline" data-i18n="ship_units">units</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-l-4 border-red-100 border-l-red-400 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <div class="p-2.5 bg-red-100 rounded-xl"><span class="material-symbols-outlined text-red-500" style="font-variation-settings:'FILL' 1;">warning</span></div>
+        </div>
+        <div class="mt-8">
+          <p class="text-[12px] font-bold uppercase tracking-wider text-red-600" data-i18n="ship_kpi_delay">Delay Alerts</p>
+          <p class="font-black text-[40px] leading-none text-on-surface mt-1">14</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table + Route Detail -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+          <h3 class="font-bold text-[18px]" data-i18n="ship_table_title">Cargo Tracking</h3>
+          <div class="flex gap-2">
+            <button class="p-2 hover:bg-surface-container rounded-xl transition-colors"><span class="material-symbols-outlined text-outline text-[18px]">filter_list</span></button>
+            <button id="ship-export-btn" class="p-2 hover:bg-surface-container rounded-xl transition-colors"><span class="material-symbols-outlined text-outline text-[18px]">download</span></button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-surface-container-low border-b border-gray-100">
+              <tr>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="ship_col_id">Shipment ID</th>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="ship_col_dest">Recipient</th>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="ship_col_carrier">Carrier</th>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider" data-i18n="ship_col_date">Est. Date</th>
+                <th class="px-5 py-3 text-[10px] uppercase font-bold text-outline tracking-wider text-right" data-i18n="ship_col_status">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50" id="ship-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Route Detail -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
+        <div>
+          <h3 class="font-bold text-[18px]" data-i18n="ship_route_title">Active Route Detail</h3>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-outline mt-1" id="ship-selected-label">Shipment ID: #SF-9021</p>
+        </div>
+        <div class="aspect-video w-full rounded-2xl overflow-hidden relative bg-surface-container-low flex items-center justify-center">
+          <div class="flex flex-col items-center gap-3 text-outline">
+            <span class="material-symbols-outlined text-[48px]">map</span>
+            <p class="text-[12px] font-semibold">Barcelona → Shanghai</p>
+          </div>
+          <div class="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-md p-3 rounded-xl border border-white/20 flex items-center justify-between shadow-sm">
+            <div>
+              <p class="text-[10px] text-outline" data-i18n="ship_location">Current Location</p>
+              <p class="text-[13px] font-bold">Puerto de Barcelona</p>
+            </div>
+            <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+          </div>
+        </div>
+        <div class="space-y-5 relative ml-4">
+          <div class="absolute left-0 top-0 bottom-0 w-[2px] bg-gray-200 ml-[11px]"></div>
+          <div class="relative flex gap-4">
+            <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center z-10 flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-[12px]">check</span>
+            </div>
+            <div>
+              <p class="text-[13px] font-bold" data-i18n="ship_step1">Origin Departure</p>
+              <p class="text-[11px] text-outline">Shanghai Port, CN — 18 Sep, 08:30</p>
+            </div>
+          </div>
+          <div class="relative flex gap-4">
+            <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center z-10 flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-[12px]">local_shipping</span>
+            </div>
+            <div>
+              <p class="text-[13px] font-bold" data-i18n="ship_step2">International Transit</p>
+              <p class="text-[11px] text-outline">Vessel: Evergreen G — En curso</p>
+            </div>
+          </div>
+          <div class="relative flex gap-4 opacity-50">
+            <div class="w-6 h-6 rounded-full bg-gray-200 border-2 border-gray-300 z-10 flex-shrink-0"></div>
+            <div>
+              <p class="text-[13px] font-bold" data-i18n="ship_step3">Arrival at Destination</p>
+              <p class="text-[11px] text-outline">Barcelona Terminal — Est. 24 Sep</p>
+            </div>
+          </div>
+        </div>
+        <button id="ship-docs-btn" class="w-full py-3 border-2 border-primary text-primary rounded-xl font-bold text-[13px] hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">description</span>
+          <span data-i18n="ship_btn_docs">View Documentation</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PAGE: ANALYTICS
+  ═══════════════════════════════════════ -->
+  <div id="page-analytics" style="display:none;" class="p-8">
+    <div class="coming-soon">
+      <div class="p-6 bg-surface-container rounded-3xl mb-2">
+        <span class="material-symbols-outlined text-[48px] text-outline">monitoring</span>
+      </div>
+      <h2 class="font-headline-md text-headline-md">Analytics</h2>
+      <p class="text-outline text-center max-w-xs" data-i18n="cs_analytics">Advanced analytics coming soon.</p>
+    </div>
+  </div>
+
+</main>
+
+<!-- FAB -->
+<button id="fab-btn" class="fixed bottom-10 right-10 w-16 h-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+  <span class="material-symbols-outlined text-[32px] group-hover:rotate-90 transition-transform">add</span>
+</button>
+
+<!-- ═══════════════ MODAL: Adjust Pricing ═══════════════ -->
+<div id="pricing-modal" class="modal-overlay">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" onclick="event.stopPropagation()">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="font-headline-md text-headline-md">Adjust Pricing</h3>
+      <button id="pricing-modal-close" class="p-2 rounded-full hover:bg-surface-container"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="space-y-5">
+      <div><label class="sf-label" for="input-cost" data-i18n="lbl_unit_cost">Unit Cost (USD)</label><input id="input-cost" class="sf-input" type="number" min="0" step="0.01"/></div>
+      <div><label class="sf-label" for="input-price" data-i18n="lbl_sell_price">Selling Price (USD)</label><input id="input-price" class="sf-input" type="number" min="0" step="0.01"/></div>
+      <div class="p-4 bg-surface-container-low rounded-xl flex justify-between items-center">
+        <span class="text-[13px] text-outline font-medium" data-i18n="lbl_calc_margin">Calculated Margin</span>
+        <span id="modal-margin-preview" class="font-bold text-emerald-600 text-lg">—</span>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button id="pricing-modal-cancel" class="flex-1 py-3 border-2 border-surface-container rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors" data-i18n="btn_cancel">Cancel</button>
+        <button id="pricing-modal-save" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow hover:scale-105 active:scale-95 transition-all" data-i18n="btn_save">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: Register Movement ═══════════════ -->
+<div id="movement-modal" class="modal-overlay">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" onclick="event.stopPropagation()">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="font-headline-md text-headline-md" data-i18n="modal_mv_title">Register Movement</h3>
+      <button id="movement-modal-close" class="p-2 rounded-full hover:bg-surface-container"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="space-y-5">
+      <div>
+        <label class="sf-label" data-i18n="lbl_product">Product</label>
+        <div class="relative">
+          <select id="mv-product" class="sf-select"></select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+        </div>
+      </div>
+      <div>
+        <label class="sf-label" data-i18n="lbl_action_type">Action Type</label>
+        <div class="relative">
+          <select id="mv-type" class="sf-select">
+            <option value="INBOUND" data-i18n="type_inbound">INBOUND</option>
+            <option value="OUTBOUND" data-i18n="type_outbound">OUTBOUND</option>
+            <option value="TRANSFER" data-i18n="type_transfer">TRANSFER</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+        </div>
+      </div>
+      <div><label class="sf-label" for="mv-warehouse" data-i18n="lbl_warehouse">Warehouse / Location</label><input id="mv-warehouse" class="sf-input" type="text" data-i18n-placeholder="ph_warehouse"/></div>
+      <div><label class="sf-label" for="mv-user" data-i18n="lbl_resp_user">Responsible User</label><input id="mv-user" class="sf-input" type="text" data-i18n-placeholder="ph_user"/></div>
+      <div><label class="sf-label" for="mv-qty" data-i18n="lbl_qty">Quantity</label><input id="mv-qty" class="sf-input" type="number" min="1" placeholder="0"/></div>
+      <div class="flex gap-3 pt-2">
+        <button id="movement-modal-cancel" class="flex-1 py-3 border-2 border-surface-container rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors" data-i18n="btn_cancel">Cancel</button>
+        <button id="movement-modal-save" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow hover:scale-105 active:scale-95 transition-all" data-i18n="btn_register">Register</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: Add Product ═══════════════ -->
+<div id="add-product-modal" class="modal-overlay">
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" onclick="event.stopPropagation()" style="max-height:90vh;overflow-y:auto;">
+    <div class="sticky top-0 bg-white px-7 py-5 border-b border-surface-container flex justify-between items-center z-10">
+      <h3 class="font-black text-[18px]" style="font-family:'Plus Jakarta Sans';" data-i18n="modal_add_title">Add New Product</h3>
+      <button id="add-product-modal-close" class="p-2 rounded-full hover:bg-surface-container transition-colors"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="px-7 py-6 space-y-5">
+      <div>
+        <label class="sf-label" data-i18n="lbl_image">Product Image</label>
+        <div id="img-drop-zone" class="relative border-2 border-dashed border-surface-container rounded-xl overflow-hidden cursor-pointer hover:border-primary transition-colors" style="height:160px;">
+          <input id="img-file-input" type="file" accept="image/*" class="hidden"/>
+          <div id="img-placeholder" class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-outline">
+            <span class="material-symbols-outlined text-[40px]">add_photo_alternate</span>
+            <p class="text-[13px] font-semibold" data-i18n="lbl_img_hint">Click to upload or drag an image</p>
+            <p class="text-[11px]">PNG, JPG, WEBP · max 5 MB</p>
+          </div>
+          <img id="img-preview" class="hidden w-full h-full object-cover" alt="Product preview"/>
+          <button id="img-remove-btn" class="hidden absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center hover:bg-black/80 transition-colors">
+            <span class="material-symbols-outlined text-white text-[14px]">close</span>
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="sf-label" for="ap-name" data-i18n="lbl_prod_name">Product Name</label>
+          <input id="ap-name" class="sf-input" type="text"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-sku" data-i18n="lbl_sku">SKU</label>
+          <input id="ap-sku" class="sf-input" type="text" placeholder="SF-XX-000"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-barcode" data-i18n="lbl_barcode">Barcode</label>
+          <input id="ap-barcode" class="sf-input" type="text" placeholder="0000-000-000"/>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="sf-label" data-i18n="lbl_category">Category</label>
+          <div class="relative">
+            <select id="ap-category" class="sf-select">
+              <option value="Heavy Machinery" data-i18n="inv_heavy">Heavy Machinery</option>
+              <option value="Electronics" data-i18n="inv_electronics">Electronics</option>
+              <option value="Tools &amp; Parts" data-i18n="inv_tools">Tools &amp; Parts</option>
+              <option value="Raw Materials" data-i18n="inv_raw">Raw Materials</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+          </div>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-manufacturer" data-i18n="lbl_manufacturer">Manufacturer</label>
+          <input id="ap-manufacturer" class="sf-input" type="text"/>
+        </div>
+      </div>
+      <div>
+        <label class="sf-label" for="ap-desc" data-i18n="lbl_description">Description</label>
+        <textarea id="ap-desc" class="sf-input resize-none" rows="3" style="line-height:1.5;"></textarea>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="sf-label" for="ap-stock" data-i18n="lbl_stock">Current Stock</label>
+          <input id="ap-stock" class="sf-input" type="number" min="0" placeholder="0"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-minstock" data-i18n="lbl_min_stock">Min. Stock</label>
+          <input id="ap-minstock" class="sf-input" type="number" min="0" placeholder="0"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-maxstock" data-i18n="lbl_max_stock">Max. Stock</label>
+          <input id="ap-maxstock" class="sf-input" type="number" min="0" placeholder="0"/>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="sf-label" for="ap-warehouse" data-i18n="lbl_warehouse">Warehouse</label>
+          <div class="relative">
+            <select id="ap-warehouse" class="sf-select">
+              <option value="WH-01">WH-01 — Almacén Central</option>
+              <option value="WH-02">WH-02 — Zona Norte</option>
+              <option value="WH-03">WH-03 — Zona Sur</option>
+              <option value="WH-04">WH-04 — Distribución</option>
+              <option value="WH-05">WH-05 — Energía Solar</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+          </div>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-location" data-i18n="lbl_location">Location / Shelf</label>
+          <input id="ap-location" class="sf-input" type="text" placeholder="e.g. B12"/>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="sf-label" for="ap-cost" data-i18n="lbl_unit_cost">Unit Cost (USD)</label>
+          <input id="ap-cost" class="sf-input" type="number" min="0" step="0.01" placeholder="0.00"/>
+        </div>
+        <div>
+          <label class="sf-label" for="ap-price" data-i18n="lbl_sell_price">Selling Price (USD)</label>
+          <input id="ap-price" class="sf-input" type="number" min="0" step="0.01" placeholder="0.00"/>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2 pb-1">
+        <button id="add-product-cancel" class="flex-1 py-3 border-2 border-surface-container rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors" data-i18n="btn_cancel">Cancel</button>
+        <button id="add-product-save" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow hover:scale-105 active:scale-95 transition-all" data-i18n="btn_save">Save Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: Schedule Shipment ═══════════════ -->
+<div id="schedule-modal" class="modal-overlay">
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" onclick="event.stopPropagation()" style="max-height:92vh;overflow-y:auto;">
+    <div class="sticky top-0 bg-white px-7 py-5 border-b border-surface-container flex justify-between items-center z-10">
+      <div>
+        <h3 class="font-black text-[18px]" style="font-family:'Plus Jakarta Sans';" data-i18n="modal_ship_title">Schedule Shipment</h3>
+        <p class="text-[12px] text-outline mt-0.5" data-i18n="modal_ship_sub">Complete the fields to register a new outbound order</p>
+      </div>
+      <button id="schedule-modal-close" class="p-2 rounded-full hover:bg-surface-container transition-colors flex-shrink-0"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="px-7 py-6 space-y-6">
+      <div>
+        <p class="text-[11px] font-black uppercase tracking-widest text-outline mb-3" data-i18n="ship_sec_origin">Origin</p>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label class="sf-label" data-i18n="lbl_warehouse">Warehouse</label>
+            <div class="relative">
+              <select id="sch-warehouse" class="sf-select">
+                <option value="WH-01">WH-01 — Almacén Central</option>
+                <option value="WH-02">WH-02 — Zona Norte</option>
+                <option value="WH-03">WH-03 — Zona Sur</option>
+                <option value="WH-04">WH-04 — Distribución</option>
+                <option value="WH-05">WH-05 — Energía Solar</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+            </div>
+          </div>
+          <div class="col-span-2">
+            <label class="sf-label" data-i18n="lbl_ship_product">Product</label>
+            <div class="relative">
+              <select id="sch-product" class="sf-select"></select>
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="sf-label" data-i18n="lbl_qty">Quantity to Ship</label>
+            <input id="sch-qty" class="sf-input" type="number" min="1" placeholder="0"/>
+          </div>
+          <div>
+            <label class="sf-label" data-i18n="lbl_ship_stock">Available Stock</label>
+            <div id="sch-stock-badge" class="sf-input flex items-center gap-2 cursor-default bg-surface-container-low text-on-surface font-semibold">—</div>
+          </div>
+        </div>
+      </div>
+      <hr class="border-surface-container"/>
+      <div>
+        <p class="text-[11px] font-black uppercase tracking-widest text-outline mb-3" data-i18n="ship_sec_address">Shipping Address</p>
+        <div class="space-y-3">
+          <div>
+            <label class="sf-label" data-i18n="lbl_ship_street">Street / Address</label>
+            <input id="sch-street" class="sf-input" type="text" placeholder="e.g. Av. Insurgentes 123"/>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="sf-label" data-i18n="lbl_ship_city">City</label>
+              <input id="sch-city" class="sf-input" type="text" placeholder="e.g. Ciudad de México"/>
+            </div>
+            <div>
+              <label class="sf-label" data-i18n="lbl_ship_postal">Postal Code</label>
+              <input id="sch-postal" class="sf-input" type="text" placeholder="00000"/>
+            </div>
+          </div>
+          <div>
+            <label class="sf-label" data-i18n="lbl_ship_country">Country</label>
+            <input id="sch-country" class="sf-input" type="text" placeholder="México"/>
+          </div>
+        </div>
+      </div>
+      <hr class="border-surface-container"/>
+      <div>
+        <p class="text-[11px] font-black uppercase tracking-widest text-outline mb-3" data-i18n="ship_sec_customer">Customer</p>
+        <div class="space-y-3">
+          <div>
+            <label class="sf-label" data-i18n="lbl_cust_name">Full Name</label>
+            <input id="sch-cust-name" class="sf-input" type="text" placeholder="e.g. María García"/>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="sf-label" data-i18n="lbl_cust_phone">Phone</label>
+              <input id="sch-cust-phone" class="sf-input" type="tel" placeholder="+52 55 0000 0000"/>
+            </div>
+            <div>
+              <label class="sf-label" data-i18n="lbl_cust_postal">Postal Code</label>
+              <input id="sch-cust-postal" class="sf-input" type="text" placeholder="00000"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <hr class="border-surface-container"/>
+      <div>
+        <p class="text-[11px] font-black uppercase tracking-widest text-outline mb-3" data-i18n="ship_sec_carrier">Carrier &amp; Date</p>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="sf-label" data-i18n="lbl_carrier">Carrier</label>
+            <div class="relative">
+              <select id="sch-carrier" class="sf-select">
+                <option>DHL Express</option>
+                <option>FedEx</option>
+                <option>UPS Supply</option>
+                <option>Maersk</option>
+                <option>Schenker</option>
+                <option>Estafeta</option>
+                <option>Paquetexpress</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="sf-label" data-i18n="lbl_ship_date">Est. Delivery Date</label>
+            <input id="sch-date" class="sf-input" type="date"/>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="sf-label" data-i18n="lbl_buyer_note">Buyer Note</label>
+        <textarea id="sch-note" class="sf-input resize-none" rows="2" style="line-height:1.5;" data-i18n-placeholder="ph_buyer_note"></textarea>
+      </div>
+      <div class="flex gap-3 pt-1 pb-1">
+        <button id="schedule-modal-cancel" class="flex-1 py-3 border-2 border-surface-container rounded-full font-label-md text-label-md hover:bg-surface-container transition-colors" data-i18n="btn_cancel">Cancel</button>
+        <button id="schedule-modal-save" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">schedule_send</span>
+          <span data-i18n="btn_schedule">Schedule Shipment</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" class="fixed bottom-28 right-10 z-[300] flex flex-col gap-2 items-end pointer-events-none"></div>
+
+<!-- Scripts (order matters: data & utils before render, render before modals, all before app) -->
+<script src="js/translations.js"></script>
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/render.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
